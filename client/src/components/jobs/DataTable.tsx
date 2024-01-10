@@ -81,7 +81,7 @@ const JobsTable: React.FC = () => {
         const buildNumber = appContext.buildID;
         const pageSize = paginationModel.pageSize;
         //Fetch rest of the data now.
-        const restOfDataApi = `http://localhost:8080/builds/${scope}/${buildNumber}?offset=${pageSize + 1}`;
+        const restOfDataApi = `${import.meta.env.VITE_APP_SERVER}/builds/${scope}/${buildNumber}?offset=${pageSize + 1}`;
         fetch(restOfDataApi)
             .then((response) => response.json())
             .then((restOfData) => {
@@ -93,7 +93,7 @@ const JobsTable: React.FC = () => {
                 calculateSideBarData(combinedData, false);
             })
         // Fetch pending jobs data now.
-        const pending_api = `http://localhost:8080/pending/${scope}/${buildNumber}`;
+        const pending_api = `${import.meta.env.VITE_APP_SERVER}/pending/${scope}/${buildNumber}`;
         fetch(pending_api)
             .then((response) => response.json())
             .then((pending) => {
@@ -151,7 +151,7 @@ const JobsTable: React.FC = () => {
         }
         const page = paginationModel.page;
         const pageSize = paginationModel.pageSize;
-        const api = `http://localhost:8080/builds/${scope}/${buildNumber}?limit=${pageSize}&page=${page}`
+        const api = `${import.meta.env.VITE_APP_SERVER}/builds/${scope}/${buildNumber}?limit=${pageSize}&page=${page}`
         //Fetch only the data for first page.
         fetch(api)
             .then((response) => response.json())

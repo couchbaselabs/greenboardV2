@@ -62,7 +62,7 @@ const JobsDetailsModal : React.FC<JobsDetailsModalProps> = ({isModalOpen, setMod
         if(scope == "" || documentId == ""){
             return;
         }
-        const api = "http://localhost:8080/build_document/" + scope + "/" + documentId;
+        const api = `${import.meta.env.VITE_APP_SERVER}/build_document/${scope}/${documentId}`;
         fetch(api)
             .then((response) => response.json())
             .then((documentData) => {

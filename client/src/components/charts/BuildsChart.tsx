@@ -46,8 +46,7 @@ const BuildChartComponent: React.FC = () => {
         if(scope === "" || version === ""){
             return;
         }
-        const api = "http://localhost:8080/versions/" + scope + "/" + version + "?buildFilter=" + buildFilter
-            + "&testFilter=" + testFilter;
+        const api = `${import.meta.env.VITE_APP_SERVER}/versions/${scope}/${version}?buildFilter=${buildFilter}&testFilter=${testFilter}`;
         // Fetch data from the API
         fetch(api)
             .then((res) => res.json())

@@ -333,7 +333,7 @@ const SiderComponent: React.FC = () => {
         if (scope === "" || version === "") {
             return;
         }
-        let api = "http://localhost:8080/sidebardata/" + scope + "/" + version;
+        let api = `${import.meta.env.VITE_APP_SERVER}/sidebardata/${scope}/${version}`;
         fetch(api)
             .then((response) => response.json())
             .then((data) => {

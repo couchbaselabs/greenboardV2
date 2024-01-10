@@ -29,7 +29,7 @@ import {useAppContext, useAppTaskDispatch} from "../../context/context";
     const scope = appContext.scope;
 
     useEffect(() => {
-      const API_URL = "http://localhost:8080/allversions/" + scope;
+      const API_URL = `${import.meta.env.VITE_APP_SERVER}/allversions/${scope}`;
       // Fetch versions from API
       fetch(API_URL)
           .then(res => res.json())
