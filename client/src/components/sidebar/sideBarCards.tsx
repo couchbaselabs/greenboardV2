@@ -1,4 +1,4 @@
-import {Card, CardContent, Typography, Stack, Switch, ButtonBase} from "@mui/material";
+    import {Card, CardContent, Typography, Stack, Switch, ButtonBase} from "@mui/material";
 import {green, red, yellow, grey} from "@mui/material/colors";
 
 interface CardItemProps {
@@ -59,12 +59,18 @@ const CardItem: React.FC<CardItemProps> = ({id, totalCount, failCount, pending, 
                         </Typography>
                     </Stack>
                 </CardContent>
-                <Switch
-                    checked={isToggled}
-                    onChange={handleCardClick}
-                    inputProps={{ 'aria-label': `${id} Toggle Switch` }}
-                    style={{ marginLeft: 'auto', marginRight: 8 }} // Ensures the switch is pushed to the right
-                />
+                <Stack
+                    direction="column">
+                    <Typography variant="body2" color = "text.secondary">
+                        {Number(totalCount / (totalCount + pending) * 100).toFixed(2)}%
+                    </Typography>
+                    <Switch
+                        checked={isToggled}
+                        onChange={handleCardClick}
+                        inputProps={{ 'aria-label': `${id} Toggle Switch` }}
+                        style={{ marginLeft: 'auto', marginRight: 8 }} // Ensures the switch is pushed to the right
+                    />
+                </Stack>
             </ButtonBase>
         </Card>
     );

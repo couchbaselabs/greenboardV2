@@ -56,9 +56,9 @@ const JobsTable: React.FC = () => {
 
     const tabsChanged = (newValue: string) => {
         if (newValue === "PENDING") {
-            setData(pendingJobsData);
+            setData(filteredPendingData);
         } else {
-            setData(runsData);
+            setData(filteredRunsData);
         }
         setResultFilter(newValue);
     }
@@ -68,7 +68,7 @@ const JobsTable: React.FC = () => {
         setLoading(true);
         setData([]);
         setRunsData([]);
-        setFilteredRunsData([]);
+        storeRunsData([]);
         setPendingJobsData([]);
         setPendingJobsData([]);
     }, [appContext.buildID]);
@@ -89,7 +89,7 @@ const JobsTable: React.FC = () => {
                 combinedData = combinedData.concat(restOfData);
                 setData(combinedData);
                 setRunsData(combinedData);
-                setFilteredRunsData(combinedData);
+                storeRunsData(combinedData);
                 calculateSideBarData(combinedData, false);
             })
         // Fetch pending jobs data now.
@@ -136,7 +136,7 @@ const JobsTable: React.FC = () => {
                     }
                 }
                 setPendingJobsData(pendingJobs);
-                setFilteredPendingData(pendingJobs);
+                storePendingData(pendingJobs);
                 calculateSideBarData(pendingJobs, true);
             });
     }, [initialLoad]);
@@ -158,7 +158,7 @@ const JobsTable: React.FC = () => {
             .then((data) => {
                 setData(data);
                 setRunsData(data);
-                setFilteredRunsData(data);
+                storeRunsData(data);
                 setLoading(false);
                 setInitialLoad(true);
             })
@@ -191,43 +191,61 @@ const JobsTable: React.FC = () => {
         });
     }
 
+    function storeRunsData(jobs: Job[]) {
+        setFilteredRunsData(jobs);
+        appTasksDispatch({
+            type: "jobsDataChanged",
+            jobsData: jobs
+        });
+    }
+
+    function storePendingData(jobs: Job[]) {
+        setFilteredPendingData(jobs);
+        appTasksDispatch({
+            type: "pendingDataChanged",
+            pendingData: jobs
+        });
+    }
+
+
     function calculateSideBarData(jobs: Job[], pending: boolean){
+        let updatedSideBarData = {...sidebarData};
         for (const job of jobs) {
             const platform = job.os;
             const feature = job.component;
             const variants = job.variants;
             if(pending) {
-                sidebarData['platforms'][platform]["pending"] += job.totalCount;
-                sidebarData['features'][feature]["pending"] += job.totalCount;
+                updatedSideBarData['platforms'][platform]["pending"] += job.totalCount;
+                updatedSideBarData['features'][feature]["pending"] += job.totalCount;
                 for (const variantsKey in variants) {
-                    sidebarData['variants'][variantsKey][variants[variantsKey]]["pending"] += job.totalCount;
+                    updatedSideBarData['variants'][variantsKey][variants[variantsKey]]["pending"] += job.totalCount;
                 }
                 continue;
             }
-            sidebarData['platforms'][platform]['totalCount'] += job.totalCount;
-            sidebarData['platforms'][platform]['failCount'] += job.failCount;
-            sidebarData['features'][feature]['totalCount'] += job.totalCount;
-            sidebarData['features'][feature]['failCount'] += job.failCount;
+            updatedSideBarData['platforms'][platform]['totalCount'] += job.totalCount;
+            updatedSideBarData['platforms'][platform]['failCount'] += job.failCount;
+            updatedSideBarData['features'][feature]['totalCount'] += job.totalCount;
+            updatedSideBarData['features'][feature]['failCount'] += job.failCount;
             for (const variantsKey in variants) {
-                sidebarData['variants'][variantsKey][variants[variantsKey]]["totalCount"] += job.totalCount;
-                sidebarData['variants'][variantsKey][variants[variantsKey]]["failCount"] += job.failCount;
+                updatedSideBarData['variants'][variantsKey][variants[variantsKey]]["totalCount"] += job.totalCount;
+                updatedSideBarData['variants'][variantsKey][variants[variantsKey]]["failCount"] += job.failCount;
             }
         }
-        storeSideBarData(sidebarData);
+        storeSideBarData(updatedSideBarData);
     }
 
     useEffect(() => {
         const filteredRunData = runsData.filter((job) =>
             job.displayName.toLowerCase().includes(deferredSearch.toLowerCase()) &&
             shouldShowJob(job));
-        setFilteredRunsData(filteredRunData);
+        storeRunsData(filteredRunData);
         calculateSideBarData(filteredRunData, false);
         const filteredPendingData = pendingJobsData.filter(
             (job) =>
                 job.displayName.toLowerCase().includes(deferredSearch.toLowerCase()) &&
                 shouldShowJob(job)
         )
-        setFilteredPendingData(filteredPendingData);
+        storePendingData(filteredPendingData);
         calculateSideBarData(filteredPendingData, true);
     }, [deferredSearch, platformFilters, featuresFilters, variantFilters])
 

@@ -55,7 +55,7 @@ interface DrawerProps {
     data: SideBarData;
 }
 
-const DrawerComponent: React.FC<DrawerProps> = ({data}) => {
+const DrawerComponent: React.FC = () => {
     const [platformKeys, setPlatformKeys] = useState<SideBarItem[]>([]);
     const [featureKeys, setFeatureKeys] = useState<SideBarItem[]>([]);
     const [variantsData, setVariantsData] = useState<{ [key: string]: SideBarItem[] }>({})
@@ -67,10 +67,14 @@ const DrawerComponent: React.FC<DrawerProps> = ({data}) => {
     const [failedCount, setFailedCount] = useState(0);
     const [pendingCount, setPendingCount] = useState(0);
     const [toggledPlatformItems, setToggledPlatformItems] = useState<string[]>([]);
+    const [platformPreviouslyToggled, setPlatformPreviouslyToggled] = useState<boolean>(false);
     const [toggledFeatureItems, setToggledFeatureItems] = useState<string[]>([]);
+    const [featurePreviouslyToggled, setFeaturePreviouslyToggled] = useState<boolean>(false);
     const [toggledVariantsItems, setToggledVariantsItems] = useState<{ [key: string]: string[] }>({});
+    const [variantsPreviouslyToggled, setVariantsPreviouslyToggled] = useState<{ [key: string]: boolean}>({})
     const appContext = useAppContext();
     const buildNumber = appContext.buildID;
+    const data = appContext.sideBarData;
     const appTasksDispatch = useAppTaskDispatch();
 
 
@@ -105,8 +109,26 @@ const DrawerComponent: React.FC<DrawerProps> = ({data}) => {
         });
     }
 
+    useEffect(() => {
+        setPlatformKeys([]);
+        setFeatureKeys([]);
+        setVariantsData({});
+        setTotalCount(0);
+        setFailedCount(0);
+        setPendingCount(0);
+        setToggledPlatformItems([]);
+        setPlatformPreviouslyToggled(false);
+        setToggledFeatureItems([]);
+        setFeaturePreviouslyToggled(false);
+        setToggledVariantsItems({});
+        setVariantsPreviouslyToggled({});
+
+    }, [appContext.version])
 
     useEffect(() => {
+        if (data === undefined){
+            return;
+        }
         let buildTotal = 0;
         let buildFailed = 0;
         let buildPending = 0;
@@ -128,7 +150,9 @@ const DrawerComponent: React.FC<DrawerProps> = ({data}) => {
                 failCount: failCount,
                 pending: pending
             });
-            toggledPlatformItems.push(platformDataKey);
+            if(!platformPreviouslyToggled) {
+                toggledPlatformItems.push(platformDataKey);
+            }
         }
         // Features data
         const features = data.features;
@@ -139,7 +163,9 @@ const DrawerComponent: React.FC<DrawerProps> = ({data}) => {
                 failCount: features[featuresKey].failCount,
                 pending: features[featuresKey].pending
             })
-            toggledFeatureItems.push(featuresKey);
+            if(!featurePreviouslyToggled) {
+                toggledFeatureItems.push(featuresKey);
+            }
         }
         //Variants data
         const variants = data.variants;
@@ -147,6 +173,11 @@ const DrawerComponent: React.FC<DrawerProps> = ({data}) => {
             const variant = variants[variantsKey];
             variantsData[variantsKey] = [];
             toggledVariantsItems[variantsKey] = [];
+            if(!variantsPreviouslyToggled.hasOwnProperty(variantsKey)){
+                let updated = {...variantsPreviouslyToggled};
+                updated[variantsKey] = false;
+                setVariantsPreviouslyToggled(updated);
+            }
             for (const variantKey in variant) {
                 variantsData[variantsKey].push({
                     id: variantKey,
@@ -154,12 +185,21 @@ const DrawerComponent: React.FC<DrawerProps> = ({data}) => {
                     failCount: variant[variantKey].failCount,
                     pending: variant[variantKey].pending,
                 });
-                toggledVariantsItems[variantsKey].push(variantKey);
+                if(!variantsPreviouslyToggled[variantsKey]) {
+                    toggledVariantsItems[variantsKey].push(variantKey);
+                }
             }
         }
-
-        setPlatformKeys(sortData(platformData, platformSortBy, platformOrder));
-        setFeatureKeys(sortData(featuresData, featuresSortBy, featuresOrder));
+        if(!platformPreviouslyToggled) {
+            setPlatformKeys(sortData(platformData, platformSortBy, platformOrder));
+        } else {
+            setPlatformKeys(platformData);
+        }
+        if(!featurePreviouslyToggled) {
+            setFeatureKeys(sortData(featuresData, featuresSortBy, featuresOrder));
+        } else {
+            setFeatureKeys(featuresData);
+        }
         setVariantsData(variantsData);
         setTotalCount(buildTotal);
         setFailedCount(buildFailed);
@@ -193,18 +233,28 @@ const DrawerComponent: React.FC<DrawerProps> = ({data}) => {
 
 
     const handlePlatformToggle = (title: string, state: boolean) => {
+        setPlatformPreviouslyToggled(true);
         if (state) {
             setToggledPlatformItems(prev => [...prev, title]);
         } else {
-            setToggledPlatformItems(prev => prev.filter(item => item !== title));
+            if(toggledPlatformItems.length === platformKeys.length){
+                setToggledPlatformItems([title]);
+            } else {
+                setToggledPlatformItems(prev => prev.filter(item => item !== title));
+            }
         }
     };
 
     const handleFeatureToggle = (title: string, state: boolean) => {
+        setFeaturePreviouslyToggled(true);
         if (state) {
             setToggledFeatureItems(prev => [...prev, title]);
         } else {
-            setToggledFeatureItems(prev => prev.filter(item => item !== title));
+            if(toggledFeatureItems.length === featureKeys.length) {
+                setToggledPlatformItems([title]);
+            } else {
+                setToggledFeatureItems(prev => prev.filter(item => item !== title));
+            }
         }
     };
 
@@ -212,14 +262,9 @@ const DrawerComponent: React.FC<DrawerProps> = ({data}) => {
         let variantKey = "";
         let found = false;
         for (const variantsDataKey in variantsData) {
-            for (const variant of variantsData[variantsDataKey]) {
-                if (variant.id === title) {
-                    variantKey = variantsDataKey;
-                    found = true;
-                    break;
-                }
-            }
+            found = variantsData[variantsDataKey].map((item) => item.id).includes(title);
             if (found) {
+                variantKey = variantsDataKey;
                 break;
             }
         }
@@ -232,10 +277,17 @@ const DrawerComponent: React.FC<DrawerProps> = ({data}) => {
                     updated[variantKey].push(title);
                 }
             } else {
-                updated[variantKey] = updated[variantKey].filter(item => item != title);
+                if(updated[variantKey].length === variantsData[variantKey].length) {
+                    updated[variantKey] = [title];
+                } else {
+                    updated[variantKey] = updated[variantKey].filter(item => item != title);
+                }
             }
             return updated;
         })
+        let updated = {...variantsPreviouslyToggled};
+        updated[variantKey] = true;
+        setVariantsPreviouslyToggled(updated);
     }
 
     const getBackgroundColor = (totalCount: number, failCount: number) => {

@@ -126,7 +126,7 @@ function appTaskReducer(task: any, action: { type: string; scope: any; versions:
                 default: {
                         throw Error('Unknown action: ' + action.type);
                 }
-        };
+        }
 }
 
 export function useAppContext() {
