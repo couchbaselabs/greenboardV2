@@ -1,5 +1,6 @@
     import {Card, CardContent, Typography, Stack, Switch, ButtonBase} from "@mui/material";
 import {green, red, yellow, grey} from "@mui/material/colors";
+    import {getPercentage} from "../../Utils/NumberUtils.ts";
 
 interface CardItemProps {
     id: string;
@@ -8,10 +9,12 @@ interface CardItemProps {
     pending: number;
     isToggled: boolean;
     handleToggle: (title: string, state: boolean) => void;
+    showPerc: boolean;
 }
 
-const CardItem: React.FC<CardItemProps> = ({id, totalCount, failCount, pending, isToggled, handleToggle}) => {
+const CardItem: React.FC<CardItemProps> = ({id, totalCount, failCount, pending, isToggled, handleToggle, showPerc}) => {
     const getBackgroundColor = (totalCount: number, failCount: number, pending: number) => {
+        if (!isToggled) return grey['300'];
         if (totalCount === 0 && failCount === 0 && pending === 0) return grey['100'];
         if (totalCount === pending) return grey['600'];
         if (failCount === 0) return green['300'];
@@ -22,6 +25,12 @@ const CardItem: React.FC<CardItemProps> = ({id, totalCount, failCount, pending, 
     const handleCardClick = () => {
         handleToggle(id, !isToggled);
     };
+
+    let tc = showPerc ? getPercentage(totalCount, totalCount + pending) : totalCount;
+    let fc = showPerc ? getPercentage(failCount, totalCount) : failCount;
+    let pc = showPerc ? getPercentage(totalCount - failCount, totalCount) : totalCount - failCount;
+    const totalPerc = getPercentage(totalCount, totalCount + pending);
+
 
     return (
         <Card
@@ -55,14 +64,17 @@ const CardItem: React.FC<CardItemProps> = ({id, totalCount, failCount, pending, 
                             {id}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                            Total: {totalCount} Failed: {failCount} Pending: {pending}
+                            {
+                                showPerc? `Total: ${tc}% Fail:${fc}% Pass: ${pc}%`:
+                                `Total: ${tc} Failed: ${fc} Pass: ${pc} Pending: ${pending}`
+                            }
                         </Typography>
                     </Stack>
                 </CardContent>
                 <Stack
                     direction="column">
                     <Typography variant="body2" color = "text.secondary">
-                        {Number(totalCount / (totalCount + pending) * 100).toFixed(2)}%
+                        {totalPerc}%
                     </Typography>
                     <Switch
                         checked={isToggled}

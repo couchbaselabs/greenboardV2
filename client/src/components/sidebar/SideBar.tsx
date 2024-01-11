@@ -7,12 +7,13 @@ import {
     useTheme,
     Typography,
     Card,
-    CardContent, Stack
+    CardContent, Stack, Switch
 } from "@mui/material";
 import {useState, useEffect} from "react";
 import SideBarSection from "./sideBarSection";
 import {useAppContext, useAppTaskDispatch} from "../../context/context";
 import {green, red, yellow} from "@mui/material/colors";
+import {getPercentage} from "../../Utils/NumberUtils.ts";
 
 const drawerWidth = '20%';
 
@@ -72,6 +73,7 @@ const DrawerComponent: React.FC = () => {
     const [featurePreviouslyToggled, setFeaturePreviouslyToggled] = useState<boolean>(false);
     const [toggledVariantsItems, setToggledVariantsItems] = useState<{ [key: string]: string[] }>({});
     const [variantsPreviouslyToggled, setVariantsPreviouslyToggled] = useState<{ [key: string]: boolean}>({})
+    const [showPerc, setShowPerc] = useState<boolean>(true);
     const appContext = useAppContext();
     const buildNumber = appContext.buildID;
     const data = appContext.sideBarData;
@@ -288,6 +290,10 @@ const DrawerComponent: React.FC = () => {
         let updated = {...variantsPreviouslyToggled};
         updated[variantKey] = true;
         setVariantsPreviouslyToggled(updated);
+    };
+
+    const handlePercSwitch = () => {
+        setShowPerc(!showPerc);
     }
 
     const getBackgroundColor = (totalCount: number, failCount: number) => {
@@ -311,11 +317,24 @@ const DrawerComponent: React.FC = () => {
                                 alignItems="flex-start"
                                 spacing={1}
                             >
-                                <Typography variant="h6" color="text.primary" gutterBottom>
-                                    {buildNumber}
-                                </Typography>
+                                <Stack spacing={3} direction="row" alignItems='center'>
+                                    <Typography variant="h6" color="text.primary" gutterBottom>
+                                        {buildNumber}
+                                    </Typography>
+                                    <Stack spacing={1} direction={"row"} alignItems='center'>
+                                        <Switch checked={showPerc} onChange={handlePercSwitch}
+                                                inputProps={{'aria-label': `Perc Toggle Switch`}}
+                                        />
+                                        <Typography variant="body2" color="text.secondary">
+                                            Show Perc
+                                        </Typography>
+                                    </Stack>
+                                </Stack>
                                 <Typography variant="body2" color="text.secondary">
-                                    Total: {totalCount} Failed: {failedCount} Pending: {pendingCount}
+                                    Total: {showPerc ? `${getPercentage(totalCount, totalCount + pendingCount)}%` : totalCount}
+                                    Fail: {showPerc ? `${getPercentage(failedCount, totalCount)}%` : failedCount}
+                                    Pass: {showPerc ? `${getPercentage(totalCount - failedCount, totalCount)}%` : totalCount - failedCount}
+                                    {showPerc ? "" : `Pending: ${pendingCount}`}
                                 </Typography>
                             </Stack>
                         </CardContent>
@@ -327,7 +346,8 @@ const DrawerComponent: React.FC = () => {
                         ...item,
                         title: item.id,
                         isToggled: toggledPlatformItems.includes(item.id),
-                        handleToggle: handlePlatformToggle
+                        handleToggle: handlePlatformToggle,
+                        showPerc: showPerc
                     }))}
                     sortBy={platformSortBy}
                     order={platformOrder}
@@ -344,7 +364,8 @@ const DrawerComponent: React.FC = () => {
                                     ...item,
                                     title: item.id,
                                     isToggled: toggledVariantsItems[itemKey]?.includes(item.id),
-                                    handleToggle: handleVariantsToggle
+                                    handleToggle: handleVariantsToggle,
+                                    showPerc: showPerc
                                 }))}
                                 sortBy={null}
                                 order={null}
@@ -360,7 +381,8 @@ const DrawerComponent: React.FC = () => {
                         ...item,
                         title: item.id,
                         isToggled: toggledFeatureItems.includes(item.id),
-                        handleToggle: handleFeatureToggle
+                        handleToggle: handleFeatureToggle,
+                        showPerc: showPerc
                     }))}
                     sortBy={featuresSortBy}
                     order={featuresOrder}

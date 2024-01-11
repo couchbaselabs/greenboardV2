@@ -1,7 +1,7 @@
 import {useDeferredValue, useEffect, useState} from "react";
 import {DataGrid, GridColDef, GridRowClassNameParams, GridToolbar, GridValidRowModel} from "@mui/x-data-grid";
 import {green, red, yellow, grey} from "@mui/material/colors";
-import {Box, Paper, Stack, Tab, Tabs, TextField} from "@mui/material";
+import {Box, Paper, Stack, Tab, Tabs, TextField, Tooltip} from "@mui/material";
 import {darken, lighten, styled} from '@mui/material/styles';
 import TabComponent from "./TabComponent";
 import {useAppContext, useAppTaskDispatch} from "../../context/context";
@@ -298,23 +298,37 @@ const JobsTable: React.FC = () => {
             flex: 1,
             filterable: true,
             renderCell: (params) => {
-                if (resultFilter === "PENDING") {
-                    return (<Box>{params.value}</Box>);
-                } else {
-                    return (
-                        <Box>
-                            <a onClick={() => {
-                                setModalOpen(true);
-                                setJobsDetailsId(params.row.id);
-                            }} style={{
-                                cursor: 'pointer'
-                            }}
-                            >
-                                {params.value}
-                            </a>
-                        </Box>
-                    );
-                }
+                const displayValue = params.value as string;
+                const isLongText = displayValue.length > 30;
+
+                const cellContent = (
+                    () => {
+                        if (resultFilter === "PENDING") {
+                            return (<Box>{params.value}</Box>);
+                        } else {
+                            return (
+                                <Box>
+                                    <a onClick={() => {
+                                        setModalOpen(true);
+                                        setJobsDetailsId(params.row.id);
+                                    }} style={{
+                                        cursor: 'pointer'
+                                    }}
+                                    >
+                                        {params.value}
+                                    </a>
+                                </Box>
+                            );
+                        }
+                    }
+                );
+                return isLongText ? (
+                    <Tooltip title={displayValue}>
+                        {cellContent()}
+                    </Tooltip>
+                ) : (
+                    cellContent()
+                );
             }
         },
         {
