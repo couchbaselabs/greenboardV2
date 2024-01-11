@@ -1,7 +1,8 @@
 import {useDeferredValue, useEffect, useState} from "react";
 import {DataGrid, GridColDef, GridRowClassNameParams, GridToolbar, GridValidRowModel} from "@mui/x-data-grid";
 import {green, red, yellow, grey} from "@mui/material/colors";
-import {Box, Paper, Stack, Tab, Tabs, TextField, Tooltip} from "@mui/material";
+import {Box, ButtonBase, Paper, Stack, Tab, Tabs, TextField, Tooltip, Typography} from "@mui/material";
+import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import {darken, lighten, styled} from '@mui/material/styles';
 import TabComponent from "./TabComponent";
 import {useAppContext, useAppTaskDispatch} from "../../context/context";
@@ -330,6 +331,21 @@ const JobsTable: React.FC = () => {
                     cellContent()
                 );
             }
+        },
+        {
+          field: 'rerun',
+          headerName: 'Rerun',
+          sortable: false,
+          filterable: false,
+            width: 50,
+          renderCell: (params) => (
+              <Box sx={{alignContent: 'center'}}>
+                  <ButtonBase
+                  >
+                    <DirectionsRunIcon fontSize='small' />
+                  </ButtonBase>
+              </Box>
+          )
         },
         {
             field: 'result',
