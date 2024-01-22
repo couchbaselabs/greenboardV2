@@ -96,13 +96,13 @@ function appTaskReducer(task: any, action: { type: string; scope: any; versions:
                 case 'featuresFilterChanged': {
                         return {
                                 ...task,
-                                featuresFilters: action.featuresFilters
+                                featureFilters: action.featuresFilters
                         };
                 }
                 case 'variantsFilterChanged': {
                         return {
                                 ...task,
-                                variantsFilters: action.variantsFilters
+                                variantFilters: action.variantsFilters
                         };
                 }
                 case 'jobsDataChanged': {

@@ -248,6 +248,11 @@ const JobsTable: React.FC = () => {
         )
         storePendingData(filteredPendingData);
         calculateSideBarData(filteredPendingData, true);
+        if(resultFilter === "PENDING") {
+            setData(filteredPendingData);
+        } else {
+            setData(filteredRunData)
+        }
     }, [deferredSearch, platformFilters, featuresFilters, variantFilters])
 
     const filteredData = data.filter(

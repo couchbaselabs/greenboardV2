@@ -152,7 +152,7 @@ const DrawerComponent: React.FC = () => {
                 failCount: failCount,
                 pending: pending
             });
-            if(!platformPreviouslyToggled) {
+            if(!platformPreviouslyToggled && !toggledPlatformItems.includes(platformDataKey)) {
                 toggledPlatformItems.push(platformDataKey);
             }
         }
@@ -165,7 +165,7 @@ const DrawerComponent: React.FC = () => {
                 failCount: features[featuresKey].failCount,
                 pending: features[featuresKey].pending
             })
-            if(!featurePreviouslyToggled) {
+            if(!featurePreviouslyToggled && !toggledFeatureItems.includes(featuresKey)) {
                 toggledFeatureItems.push(featuresKey);
             }
         }
@@ -187,7 +187,7 @@ const DrawerComponent: React.FC = () => {
                     failCount: variant[variantKey].failCount,
                     pending: variant[variantKey].pending,
                 });
-                if(!variantsPreviouslyToggled[variantsKey]) {
+                if(!variantsPreviouslyToggled[variantsKey] && !toggledVariantsItems[variantsKey].includes(variantKey)) {
                     toggledVariantsItems[variantsKey].push(variantKey);
                 }
             }
@@ -253,7 +253,7 @@ const DrawerComponent: React.FC = () => {
             setToggledFeatureItems(prev => [...prev, title]);
         } else {
             if(toggledFeatureItems.length === featureKeys.length) {
-                setToggledPlatformItems([title]);
+                setToggledFeatureItems([title]);
             } else {
                 setToggledFeatureItems(prev => prev.filter(item => item !== title));
             }

@@ -16,7 +16,7 @@ const CardItem: React.FC<CardItemProps> = ({id, totalCount, failCount, pending, 
     const getBackgroundColor = (totalCount: number, failCount: number, pending: number) => {
         if (!isToggled) return grey['300'];
         if (totalCount === 0 && failCount === 0 && pending === 0) return grey['100'];
-        if (totalCount === pending) return grey['600'];
+        if (totalCount === 0) return grey['600'];
         if (failCount === 0) return green['300'];
         if (failCount === totalCount) return red['300'];
         return yellow[300];
