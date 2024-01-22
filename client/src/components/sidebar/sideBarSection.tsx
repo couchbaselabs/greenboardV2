@@ -1,7 +1,7 @@
-import {Typography, Box, FormControlLabel} from "@mui/material";
+import {Typography, Box, FormControlLabel, Checkbox} from "@mui/material";
 import CardItem from "./sideBarCards";
 import SortButtonGroup from "./sideBarSort";
-import {CheckBox} from "@mui/icons-material";
+import {useEffect, useState} from "react";
 
 interface SectionProps {
     title: string;
@@ -13,11 +13,30 @@ interface SectionProps {
 }
 
 const SideBarSection: React.FC<SectionProps> = ({ title, items, sortBy, order, setSortBy, setOrder }) => {
+    const [allChecked, setAllChecked] = useState(false);
+
+    useEffect(() => {
+        // Check if all items are toggled
+        const areAllChecked = items.every(item => item.isToggled);
+        setAllChecked(areAllChecked);
+    }, [items]);
+
+    const handleAllCheck = (event) => {
+        const checked = event.target.checked;
+        setAllChecked(checked);
+        items.forEach(item => item.handleToggle(item.id, checked));
+    };
+
+
     return (
         <div>
             <Box sx={{display: "flex"}}>
                 <Typography variant='h4' component='h4'>{title}</Typography>
-                <FormControlLabel control={<CheckBox key={title}></CheckBox>} label="ALL" sx={{marginLeft: 4}} />
+                <FormControlLabel
+                    control={<Checkbox checked={allChecked} onChange={handleAllCheck} key={title} />}
+                    label="ALL"
+                    sx={{ marginLeft: 4 }}
+                />
             </Box>
             {sortBy !== null && order !== null && setSortBy !== null && setOrder !== null && (
                 <Box mt={1}>

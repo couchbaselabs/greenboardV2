@@ -1,4 +1,4 @@
-    import {Card, CardContent, Typography, Stack, Switch, ButtonBase} from "@mui/material";
+    import {Card, CardContent, Typography, Stack, Switch, ButtonBase, Checkbox} from "@mui/material";
 import {green, red, yellow, grey} from "@mui/material/colors";
     import {getPercentage} from "../../Utils/NumberUtils.ts";
 
@@ -76,10 +76,11 @@ const CardItem: React.FC<CardItemProps> = ({id, totalCount, failCount, pending, 
                     <Typography variant="body2" color = "text.secondary">
                         {totalPerc}%
                     </Typography>
-                    <Switch
+                    <Checkbox
                         checked={isToggled}
                         onChange={handleCardClick}
-                        inputProps={{ 'aria-label': `${id} Toggle Switch` }}
+                        inputProps={{ 'aria-label': `${id} Toggle Checkbox` }}
+                        color="success"
                         style={{ marginLeft: 'auto', marginRight: 8 }} // Ensures the switch is pushed to the right
                     />
                 </Stack>
