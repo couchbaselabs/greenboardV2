@@ -80,8 +80,7 @@ const CardItem: React.FC<CardItemProps> = ({id, totalCount, failCount, pending, 
                         checked={isToggled}
                         onChange={handleCardClick}
                         inputProps={{ 'aria-label': `${id} Toggle Checkbox` }}
-                        color="success"
-                        style={{ marginLeft: 'auto', marginRight: 8 }} // Ensures the switch is pushed to the right
+                        style={{ marginLeft: 'auto', marginRight: 8, color: green['900'] }} // Ensures the switch is pushed to the right
                     />
                 </Stack>
             </ButtonBase>

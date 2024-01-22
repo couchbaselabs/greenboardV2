@@ -233,13 +233,19 @@ const DrawerComponent: React.FC = () => {
         storeVariantsToggledItems();
     }, [toggledVariantsItems]);
 
+    function dedupedArray(array: null | Iterable<T>) {
+        return Array.from(new Set(array));
+    }
 
     const handlePlatformToggle = (title: string, state: boolean) => {
         setPlatformPreviouslyToggled(true);
         if (state) {
-            setToggledPlatformItems(prev => [...prev, title]);
+            if(!toggledPlatformItems.includes(title)) {
+                setToggledPlatformItems(prev => [...prev, title]);
+            }
+            console.log(toggledPlatformItems);
         } else {
-            if(toggledPlatformItems.length === platformKeys.length){
+            if(dedupedArray(toggledPlatformItems).length === dedupedArray(platformKeys).length){
                 setToggledPlatformItems([title]);
             } else {
                 setToggledPlatformItems(prev => prev.filter(item => item !== title));
@@ -250,9 +256,11 @@ const DrawerComponent: React.FC = () => {
     const handleFeatureToggle = (title: string, state: boolean) => {
         setFeaturePreviouslyToggled(true);
         if (state) {
-            setToggledFeatureItems(prev => [...prev, title]);
+            if(!toggledFeatureItems.includes(title)) {
+                setToggledFeatureItems(prev => [...prev, title]);
+            }
         } else {
-            if(toggledFeatureItems.length === featureKeys.length) {
+            if(dedupedArray(toggledFeatureItems).length === dedupedArray(featureKeys).length) {
                 setToggledFeatureItems([title]);
             } else {
                 setToggledFeatureItems(prev => prev.filter(item => item !== title));
