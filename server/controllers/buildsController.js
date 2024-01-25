@@ -78,7 +78,7 @@ const getPendingJobsForBuild = async (req, res) => {
     let extraParams = 2;
     let queryString = "SELECT c.os, c.name, " +
         "(SELECT j.name, j.totalCount, j.displayName, j.variants FROM OBJECT_VALUES(c.jobs) j " +
-        "WHERE j.name IN ARRAY_EXCEPT(OBJECT_NAMES(c.jobs), build_jobs)) AS jobs FROM `versionComponents` c " +
+        "WHERE j.name IN ARRAY_EXCEPT(OBJECT_NAMES(c.jobs), build_jobs) and j.deleted != true) AS jobs FROM `versionComponents` c " +
         "LET build_jobs = (SELECT RAW name FROM `builds` WHERE `build` = $1"
     if (component !== undefined ) {
         queryString += " AND component = $" + extraParams;

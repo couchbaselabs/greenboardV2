@@ -1,7 +1,7 @@
 import {useDeferredValue, useEffect, useState} from "react";
 import {DataGrid, GridColDef, GridRowClassNameParams, GridToolbar, GridValidRowModel} from "@mui/x-data-grid";
-import {green, red, yellow, grey} from "@mui/material/colors";
-import {Box, ButtonBase, Paper, Stack, Tab, Tabs, TextField, Tooltip, Typography} from "@mui/material";
+import {green, grey, red, yellow} from "@mui/material/colors";
+import {Box, ButtonBase, Paper, Stack, Tab, Tabs, TextField, Tooltip} from "@mui/material";
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import {darken, lighten, styled} from '@mui/material/styles';
 import TabComponent from "./TabComponent";
@@ -34,6 +34,7 @@ const JobsTable: React.FC = () => {
     const [pendingJobsData, setPendingJobsData] = useState<Job[]>([]);
     const [filteredPendingData, setFilteredPendingData] = useState<Job[]>([]);
     const [initialLoad, setInitialLoad] = useState(false);
+    const [getPendingLoad, setGetPendingLoad] = useState(false);
     const [loading, setLoading] = useState(true);
     const [order, _setOrder] = useState<'asc' | 'dsc'>('asc');
     const [orderBy, _setOrderBy] = useState<keyof Job>('displayName');
@@ -75,6 +76,34 @@ const JobsTable: React.FC = () => {
     }, [appContext.buildID]);
 
     useEffect(() => {
+        setLoading(true);
+        const scope = appContext.scope;
+        const buildNumber = appContext.buildID;
+        if (scope == "" || buildNumber == "") {
+            setLoading(true);
+            return;
+        }
+        const page = paginationModel.page;
+        const pageSize = paginationModel.pageSize;
+        const api = `${import.meta.env.VITE_APP_SERVER}/builds/${scope}/${buildNumber}?limit=${pageSize}&page=${page}`
+        //Fetch only the data for first page.
+        fetch(api)
+            .then((response) => response.json())
+            .then((data) => {
+                setData(data);
+                setRunsData(data);
+                storeRunsData(data);
+                setLoading(false);
+                setInitialLoad(true);
+                setGetPendingLoad(true);
+            })
+            .catch((error) => {
+                console.error('Error fetching data:', error);
+                setLoading(false);
+            });
+    }, [appContext.scope, appContext.buildID]);
+
+    useEffect(() => {
         if (!initialLoad) {
             return;
         }
@@ -93,7 +122,15 @@ const JobsTable: React.FC = () => {
                 storeRunsData(combinedData);
                 calculateSideBarData(combinedData, false);
             })
+    }, [initialLoad]);
+
+    useEffect(() => {
+        if (!getPendingLoad) {
+            return;
+        }
         // Fetch pending jobs data now.
+        const scope = appContext.scope;
+        const buildNumber = appContext.buildID;
         const pending_api = `${import.meta.env.VITE_APP_SERVER}/pending/${scope}/${buildNumber}`;
         fetch(pending_api)
             .then((response) => response.json())
@@ -140,34 +177,7 @@ const JobsTable: React.FC = () => {
                 storePendingData(pendingJobs);
                 calculateSideBarData(pendingJobs, true);
             });
-    }, [initialLoad]);
-
-    useEffect(() => {
-        setLoading(true);
-        const scope = appContext.scope;
-        const buildNumber = appContext.buildID;
-        if (scope == "" || buildNumber == "") {
-            setLoading(true);
-            return;
-        }
-        const page = paginationModel.page;
-        const pageSize = paginationModel.pageSize;
-        const api = `${import.meta.env.VITE_APP_SERVER}/builds/${scope}/${buildNumber}?limit=${pageSize}&page=${page}`
-        //Fetch only the data for first page.
-        fetch(api)
-            .then((response) => response.json())
-            .then((data) => {
-                setData(data);
-                setRunsData(data);
-                storeRunsData(data);
-                setLoading(false);
-                setInitialLoad(true);
-            })
-            .catch((error) => {
-                console.error('Error fetching data:', error);
-                setLoading(false);
-            });
-    }, [appContext.scope, appContext.buildID]);
+    }, [getPendingLoad])
 
     function shouldShowJob(job: Job) {
         let show = true;
@@ -209,13 +219,13 @@ const JobsTable: React.FC = () => {
     }
 
 
-    function calculateSideBarData(jobs: Job[], pending: boolean){
+    function calculateSideBarData(jobs: Job[], pending: boolean) {
         let updatedSideBarData = {...sidebarData};
         for (const job of jobs) {
             const platform = job.os;
             const feature = job.component;
             const variants = job.variants;
-            if(pending) {
+            if (pending) {
                 updatedSideBarData['platforms'][platform]["pending"] += job.totalCount;
                 updatedSideBarData['features'][feature]["pending"] += job.totalCount;
                 for (const variantsKey in variants) {
@@ -248,7 +258,7 @@ const JobsTable: React.FC = () => {
         )
         storePendingData(filteredPendingData);
         calculateSideBarData(filteredPendingData, true);
-        if(resultFilter === "PENDING") {
+        if (resultFilter === "PENDING") {
             setData(filteredPendingData);
         } else {
             setData(filteredRunData)
@@ -338,19 +348,19 @@ const JobsTable: React.FC = () => {
             }
         },
         {
-          field: 'rerun',
-          headerName: 'Rerun',
-          sortable: false,
-          filterable: false,
+            field: 'rerun',
+            headerName: 'Rerun',
+            sortable: false,
+            filterable: false,
             width: 50,
-          renderCell: (params) => (
-              <Box sx={{alignContent: 'center'}}>
-                  <ButtonBase
-                  >
-                    <DirectionsRunIcon fontSize='small' />
-                  </ButtonBase>
-              </Box>
-          )
+            renderCell: (params) => (
+                <Box sx={{alignContent: 'center'}}>
+                    <ButtonBase
+                    >
+                        <DirectionsRunIcon fontSize='small'/>
+                    </ButtonBase>
+                </Box>
+            )
         },
         {
             field: 'result',
@@ -496,21 +506,27 @@ const JobsTable: React.FC = () => {
                                   mt: '0.3em'
                               }}
                         >
-                            <Tab label={<TabComponent display={`${jobCounts.ALL} JOBS COMPLETED`} bgcolor={grey['100']}/>}
+                            <Tab label={<TabComponent display={`${jobCounts.ALL} JOBS COMPLETED`}
+                                                      bgcolor={grey['100']}/>}
                                  value='ALL'/>
-                            <Tab label={<TabComponent display={`${jobCounts.SUCCESS} JOBS SUCCESSFUL`} bgcolor={green['300']}/>}
+                            <Tab label={<TabComponent display={`${jobCounts.SUCCESS} JOBS SUCCESSFUL`}
+                                                      bgcolor={green['300']}/>}
                                  value="SUCCESS"
                             />
-                            <Tab label={<TabComponent display={`${jobCounts.FAILURE} JOBS FAILED`} bgcolor={red['300']}/>}
+                            <Tab label={<TabComponent display={`${jobCounts.FAILURE} JOBS FAILED`}
+                                                      bgcolor={red['300']}/>}
                                  value="FAILURE"
                             />
-                            <Tab label={<TabComponent display={`${jobCounts.UNSTABLE} JOBS UNSTABLE`} bgcolor={yellow['300']}/>}
+                            <Tab label={<TabComponent display={`${jobCounts.UNSTABLE} JOBS UNSTABLE`}
+                                                      bgcolor={yellow['300']}/>}
                                  value="UNSTABLE"
                             />
-                            <Tab label={<TabComponent display={`${jobCounts.ABORTED} JOBS ABORTED`} bgcolor={grey['500']}/>}
+                            <Tab label={<TabComponent display={`${jobCounts.ABORTED} JOBS ABORTED`}
+                                                      bgcolor={grey['500']}/>}
                                  value="ABORTED"
                             />
-                            <Tab label={<TabComponent display={`${jobCounts.PENDING} JOBS PENDING`} bgcolor={grey['100']}/>}
+                            <Tab label={<TabComponent display={`${jobCounts.PENDING} JOBS PENDING`}
+                                                      bgcolor={grey['100']}/>}
                                  value="PENDING"
                             />
                         </Tabs>
@@ -521,19 +537,19 @@ const JobsTable: React.FC = () => {
                         width: '100%'
                     }}>
                         <StyledDataGrid columns={columns} rows={filteredData}
-                                  initialState={{
-                                      sorting: {
-                                          sortModel: [{field: 'displayName', sort: 'asc'}]
-                                      }
-                                  }}
-                                  getRowClassName={(params) => `data-grid--${getRowClassName(params)}`}
-                                  paginationModel={paginationModel}
-                                  onPaginationModelChange={setPaginationModel}
-                                  pageSizeOptions={[5, 10, 25, 50, 100]}
-                                  loading={loading}
-                                  slots={{
-                                      toolbar: GridToolbar,
-                                  }}
+                                        initialState={{
+                                            sorting: {
+                                                sortModel: [{field: 'displayName', sort: 'asc'}]
+                                            }
+                                        }}
+                                        getRowClassName={(params) => `data-grid--${getRowClassName(params)}`}
+                                        paginationModel={paginationModel}
+                                        onPaginationModelChange={setPaginationModel}
+                                        pageSizeOptions={[5, 10, 25, 50, 100]}
+                                        loading={loading}
+                                        slots={{
+                                            toolbar: GridToolbar,
+                                        }}
                         />
                     </Paper>
                 </Stack>

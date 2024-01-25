@@ -73,7 +73,7 @@ const CardItem: React.FC<CardItemProps> = ({id, totalCount, failCount, pending, 
                 </CardContent>
                 <Stack
                     direction="column">
-                    <Typography variant="body2" color = "text.secondary">
+                    <Typography variant="body2" color = "h6">
                         {totalPerc}%
                     </Typography>
                     <Checkbox
