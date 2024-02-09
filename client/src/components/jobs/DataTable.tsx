@@ -315,8 +315,6 @@ const JobsTable: React.FC = () => {
             filterable: true,
             renderCell: (params) => {
                 const displayValue = params.value as string;
-                const isLongText = displayValue.length > 30;
-
                 const cellContent = (
                     () => {
                         if (resultFilter === "PENDING") {
@@ -338,12 +336,10 @@ const JobsTable: React.FC = () => {
                         }
                     }
                 );
-                return isLongText ? (
+                return (
                     <Tooltip title={displayValue}>
                         {cellContent()}
                     </Tooltip>
-                ) : (
-                    cellContent()
                 );
             }
         },
