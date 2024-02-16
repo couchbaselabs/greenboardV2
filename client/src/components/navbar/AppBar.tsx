@@ -6,6 +6,7 @@ import UserMenu from "./UserMenu";
 import VersionMenu from "./VersionMenu";
 import Styles from "./styles";
 import {FilterMenu} from "./FilterMenu";
+import {useAppContext} from "../../context/context.tsx";
 
 const AppBarComponent: React.FC = () => {
   //const [selectedProd, setSelectedProd] = useState(Products.indexOf(localStorage.getItem('scope') || ""));
@@ -14,6 +15,8 @@ const AppBarComponent: React.FC = () => {
   const [userName, setUserName] = useState('');
   const buildsFilterItems = [5, 10, 25];
   const runsFilterItems = [0, 2000, 5000, 10000];
+  const appContext = useAppContext();
+  const product = appContext.scope;
 
   const handleLogin = (response: any) => {
     setLoggedIn(true);
@@ -37,9 +40,13 @@ const AppBarComponent: React.FC = () => {
             <Box sx={{ flexGrow: 1 }} />
             <Box display='flex'>
                 <ProductMenu />
-                <VersionMenu />
-                <FilterMenu title="Builds" items={buildsFilterItems} scopeVariable='buildFilter' scopeAction='buildFilterChanged' />
-                <FilterMenu title="Runs" items={runsFilterItems} scopeVariable='runFilter' scopeAction='runFilterChanged' />
+                {product !== "capella" && (
+                    <>
+                        <VersionMenu />
+                        <FilterMenu title="Builds" items={buildsFilterItems} scopeVariable='buildFilter' scopeAction='buildFilterChanged' />
+                        <FilterMenu title="Runs" items={runsFilterItems} scopeVariable='runFilter' scopeAction='runFilterChanged' />
+                    </>
+                )}
                 <UserMenu isLoggedIn={isLoggedIn} userName={userName} handleLogin={handleLogin} handleLogout={handleLogout} />
             </Box>
         </Toolbar>

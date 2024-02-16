@@ -1,13 +1,14 @@
 import {useDeferredValue, useEffect, useState} from "react";
-import {DataGrid, GridColDef, GridRowClassNameParams, GridToolbar, GridValidRowModel} from "@mui/x-data-grid";
+import {GridColDef, GridToolbar} from "@mui/x-data-grid";
 import {green, grey, red, yellow} from "@mui/material/colors";
 import {Box, ButtonBase, Paper, Stack, Tab, Tabs, TextField, Tooltip} from "@mui/material";
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
-import {darken, lighten, styled} from '@mui/material/styles';
 import TabComponent from "./TabComponent";
 import {useAppContext, useAppTaskDispatch} from "../../context/context";
 import JobsDetailsModal from "./JobsDetailsModal";
 import {formatDuration} from "../../Utils/DateUtils";
+import {getRowClassName} from "../../Utils/StylesUtils";
+import {StyledDataGrid} from "./StyledDataGrip";
 
 
 interface Job {
@@ -434,49 +435,6 @@ const JobsTable: React.FC = () => {
             )
         })) : []),
     ];
-
-    const getBackgroundColor = (color: string, mode: string) =>
-        mode === 'dark' ? darken(color, 0.7) : lighten(color, 0.7);
-
-    const getHoverBackgroundColor = (color: string, mode: string) =>
-        mode === 'dark' ? darken(color, 0.6) : lighten(color, 0.6);
-
-    const getSelectedBackgroundColor = (color: string, mode: string) =>
-        mode === 'dark' ? darken(color, 0.5) : lighten(color, 0.5);
-
-    const getSelectedHoverBackgroundColor = (color: string, mode: string) =>
-        mode === 'dark' ? darken(color, 0.4) : lighten(color, 0.4);
-
-    const StyledDataGrid = styled(DataGrid)(({theme}) => ({
-        '& .data-grid--even': {
-            backgroundColor: getBackgroundColor(grey['100'], theme.palette.mode),
-            '&:hover': {
-                backgroundColor: getHoverBackgroundColor(grey['100'], theme.palette.mode),
-            },
-            '&.Mui-selected': {
-                backgroundColor: getSelectedBackgroundColor(grey['100'], theme.palette.mode),
-                '&:hover': {
-                    backgroundColor: getSelectedHoverBackgroundColor(grey['100'], theme.palette.mode),
-                }
-            }
-        },
-        '& .data-grid--odd': {
-            backgroundColor: getBackgroundColor(grey['400'], theme.palette.mode),
-            '&:hover': {
-                backgroundColor: getHoverBackgroundColor(grey['400'], theme.palette.mode),
-            },
-            '&.Mui-selected': {
-                backgroundColor: getSelectedBackgroundColor(grey['400'], theme.palette.mode),
-                '&:hover': {
-                    backgroundColor: getSelectedHoverBackgroundColor(grey['400'], theme.palette.mode),
-                }
-            }
-        }
-    }));
-
-    const getRowClassName = (params: GridRowClassNameParams<GridValidRowModel>) => {
-        return params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd';
-    };
 
     return (
         <>

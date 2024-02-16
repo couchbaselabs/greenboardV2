@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react";
 import {
     Box,
     Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton,
-    Paper, PaperProps, Stack,
+    Paper, Stack,
     Table,
     TableBody,
     TableCell,
@@ -11,10 +11,9 @@ import {
     TableRow,
     Typography
 } from "@mui/material";
-import {green, grey, red, yellow} from "@mui/material/colors";
-import Draggable from 'react-draggable';
 import CloseIcon from '@mui/icons-material/Close';
 import {formatDuration} from "../../Utils/DateUtils";
+import {PaperComponent, rowStyle} from "../../Utils/StylesUtils";
 
 
 
@@ -34,17 +33,6 @@ interface JobsDetails {
     failCount: number;
     duration: number;
     runDate: number;
-}
-
-function PaperComponent(props: PaperProps) {
-    return (
-        <Draggable
-            handle="#draggable-dialog-title"
-            cancel={'[class*="MuiDialogContent-root"]'}
-        >
-            <Paper {...props} />
-        </Draggable>
-    )
 }
 
 const JobsDetailsModal : React.FC<JobsDetailsModalProps> = ({isModalOpen, setModalOpen, scope, documentId}) => {
@@ -92,24 +80,6 @@ const JobsDetailsModal : React.FC<JobsDetailsModalProps> = ({isModalOpen, setMod
                 setLoading(false);
             })
     }, [scope, documentId]);
-
-    const rowStyle = (result: string) => {
-        let bgcolor: string = grey['100'];
-        switch (result) {
-            case 'SUCCESS':
-                bgcolor = green['300'];
-                break;
-            case 'FAILURE':
-                bgcolor = red['300'];
-                break;
-            case 'UNSTABLE':
-                bgcolor = yellow['300'];
-                break;
-            case 'ABORTED':
-                bgcolor = grey['500'];
-        }
-        return { backgroundColor : bgcolor };
-    };
 
     return (
         <>

@@ -29,6 +29,9 @@ import {useAppContext, useAppTaskDispatch} from "../../context/context";
     const scope = appContext.scope;
 
     useEffect(() => {
+      if(scope === 'capella') {
+        return;
+      }
       const API_URL = `${import.meta.env.VITE_APP_SERVER}/allversions/${scope}`;
       // Fetch versions from API
       fetch(API_URL)

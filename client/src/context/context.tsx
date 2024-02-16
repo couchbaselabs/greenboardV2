@@ -1,5 +1,6 @@
 import {createContext, useContext, useReducer} from "react";
 import {object} from "prop-types";
+import {endOfDay, startOfDay} from 'date-fns';
 
 const AppContext = createContext<context>({
         buildFilter: 0,
@@ -13,7 +14,10 @@ const AppContext = createContext<context>({
         sideBarData: {},
         variantFilters: {},
         version: "",
-        versions: []
+        versions: [],
+        environment: "sbx",
+        startDate: startOfDay(new Date()).getTime(),
+        endDate: endOfDay(new Date()).getTime(),
 });
 const AppDispatchContext = createContext({});
 
@@ -30,6 +34,9 @@ type context = {
         jobsData: any[];
         pendingData: any[];
         sideBarData: object;
+        environment: string;
+        startDate: number;
+        endDate: number;
 };
 
 const initialStates = {
@@ -45,11 +52,15 @@ const initialStates = {
         jobsData : [],
         pendingData: [],
         sideBarData: {},
+        environment: "sbx",
+        startDate: startOfDay(new Date()).getTime(),
+        endDate: endOfDay(new Date()).getTime(),
     }
 
 function appTaskReducer(task: any, action: { type: string; scope: any; versions: any; version: any; buildID: any;
         runFilter: number; buildFilter: number; platformFilters: string[], featuresFilters:string[],
-        variantsFilters:any, jobsData: any[], pendingData: any[], sideBarData: any}){
+        variantsFilters:any, jobsData: any[], pendingData: any[], sideBarData: any, environment: string,
+        startDate: number, endDate: number}){
         switch (action.type) {
                 case 'scopeChange' : {
                         return {
@@ -121,6 +132,24 @@ function appTaskReducer(task: any, action: { type: string; scope: any; versions:
                         return {
                                 ...task,
                                 sideBarData: action.sideBarData
+                        };
+                }
+                case 'environmentDataChanged': {
+                        return {
+                                ...task,
+                                environment: action.environment
+                        };
+                }
+                case 'startDateDataChanged': {
+                        return {
+                                ...task,
+                                startDate: action.startDate
+                        };
+                }
+                case 'endDateDataChanged': {
+                        return {
+                                ...task,
+                                endDate: action.endDate
                         };
                 }
                 default: {

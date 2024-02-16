@@ -17,45 +17,6 @@ import {getPercentage} from "../../Utils/NumberUtils.ts";
 
 const drawerWidth = '20%';
 
-
-type SideBarData = {
-    "platforms": {
-        [key: string]: {
-            totalCount: number;
-            failCount: number;
-            pending: number;
-        };
-    };
-    "features": {
-        [key: string]: {
-            totalCount: number;
-            failCount: number;
-            pending: number;
-        };
-    };
-    "variants": {
-        [key: string]: {
-            [key: string]: {
-                totalCount: number;
-                failCount: number;
-                pending: number;
-            };
-        };
-    };
-}
-
-type SideBarItem = {
-    id: string;
-    totalCount: number;
-    failCount: number;
-    pending: number;
-}
-
-
-interface DrawerProps {
-    data: SideBarData;
-}
-
 const DrawerComponent: React.FC = () => {
     const [platformKeys, setPlatformKeys] = useState<SideBarItem[]>([]);
     const [featureKeys, setFeatureKeys] = useState<SideBarItem[]>([]);
@@ -412,7 +373,7 @@ const SiderComponent: React.FC = () => {
     const [data, setData] = useState<any>({});
 
     useEffect(() => {
-        if (scope === "" || version === "") {
+        if (scope === "" || version === "" || scope === "capella") {
             return;
         }
         let api = `${import.meta.env.VITE_APP_SERVER}/sidebardata/${scope}/${version}`;
@@ -478,7 +439,7 @@ const SiderComponent: React.FC = () => {
                 [`& .MuiDrawer-paper`]: {width: drawerWidth, boxSizing: 'border-box'},
             }}
         >
-            <DrawerComponent data={data}/>
+            <DrawerComponent />
         </Drawer>
     );
 };
