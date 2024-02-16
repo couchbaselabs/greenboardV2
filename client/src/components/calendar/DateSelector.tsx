@@ -1,5 +1,3 @@
-import 'react-date-range/dist/styles.css';
-import 'react-date-range/dist/theme/default.css';
 import {addDays, endOfDay, endOfYesterday, startOfDay, startOfWeek, startOfYesterday} from 'date-fns';
 import {useState} from "react";
 import {useAppContext, useAppTaskDispatch} from "../../context/context.tsx";
