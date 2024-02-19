@@ -10,7 +10,7 @@ const AppContext = createContext<context>({
         pendingData: [],
         platformFilters: [],
         runFilter: 0,
-        scope: "server",
+        scope: "capella",
         sideBarData: {},
         variantFilters: {},
         version: "",
@@ -40,7 +40,7 @@ type context = {
 };
 
 const initialStates = {
-        scope: 'server',
+        scope: 'capella',
         versions: [],
         version: '',
         buildID: '',
