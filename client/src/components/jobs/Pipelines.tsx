@@ -1,16 +1,25 @@
 import React, {useEffect, useState} from "react";
 import {useAppContext, useAppTaskDispatch} from "../../context/context.tsx";
-import {Box, CircularProgress, Divider, Stack} from "@mui/material";
+import {Box, CircularProgress, Divider, Stack, Typography} from "@mui/material";
 import PipelinesTable from "./PipelinesTable.tsx";
 import PipelineJobsTable from "./PipelineJobsTable.tsx";
 import CapellaCharts from "../charts/CapellaCharts.tsx";
 import CalandarRangePick from "../calendar/DateSelector.tsx";
 
 
+const NoData: React.FC = () => {
+    return (
+        <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+            <Typography variant={"h5"}>No Data to show for selected time frame.</Typography>
+        </Box>
+    )
+}
+
 const Pipelines : React.FC = () => {
     const [fullJobsData, setFullJobsData] = useState<PipelineData | null>(null);
     const [jobsData, setJobsData] = useState<PipelineJob[] | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [noData, setNoData] = useState(false);
     const appContext = useAppContext();
     const env = appContext.environment;
     const taskDispatch = useAppTaskDispatch()
@@ -89,6 +98,7 @@ const Pipelines : React.FC = () => {
 
     useEffect(() => {
         setIsLoading(true);
+        setNoData(false);
         if(appContext.scope === "capella") {
             const startDate = appContext.startDate;
             const endDate = appContext.endDate;
@@ -97,9 +107,14 @@ const Pipelines : React.FC = () => {
             fetch(api)
                 .then((res) => res.json())
                 .then((data) => {
+                    if(Object.entries(data).length == 0) {
+                        setNoData(true);
+                        setIsLoading(false);
+                    }
                     setFullJobsData(data);
                     setJobsData(data[env].jobs);
                     setIsLoading(false);
+                    setNoData(false);
                     calculateSideBarItems(data[env].jobs);
                 })
                 .catch(console.error);
@@ -108,6 +123,7 @@ const Pipelines : React.FC = () => {
 
     useEffect(() => {
         if(fullJobsData){
+            setNoData(false);
             setJobsData(fullJobsData[env].jobs);
             calculateSideBarItems(fullJobsData[env].jobs);
         }
@@ -121,26 +137,39 @@ const Pipelines : React.FC = () => {
         );
     }
 
+    // @ts-ignore
     return (
-        <Box>
-            {!fullJobsData?
-                <CircularProgress />:
-                <Box>
-                    <Stack direction='row' display='flex' justifyContent='space-between'>
-                        <CapellaCharts data={fullJobsData} />
-                        <CalandarRangePick />
-                    </Stack>
-                    <Divider />
-                    {!jobsData?
-                        <CircularProgress />:
-                        <>
-                            <PipelinesTable jobs={jobsData} loading={isLoading}/>
-                            <Divider />
-                            <PipelineJobsTable jobs={jobsData} loading={isLoading} />
-                        </>
-                    }
-                </Box>
-            }
+        <Box sx={{
+            mt: 3
+        }}>
+            <Stack direction='row' display='flex' justifyContent='space-between'>
+                {isLoading?
+                    <CircularProgress />:
+                    fullJobsData && !noData?
+                        <CapellaCharts data={fullJobsData} /> :
+                        <NoData />
+                }
+                <Divider orientation="vertical" variant="middle" flexItem />
+                <CalandarRangePick />
+            </Stack>
+            <Box sx={{
+                justifyContent: 'center'
+            }}>
+                <Divider textAlign="left">Pipelines</Divider>
+                {isLoading?
+                    <CircularProgress />:
+                    jobsData && !noData?
+                        <PipelinesTable jobs={jobsData} loading={isLoading}/>:
+                        <NoData />
+                }
+                <Divider textAlign="left">Pipeline Jobs</Divider>
+                {isLoading?
+                    <CircularProgress />:
+                    jobsData && !noData?
+                        <PipelineJobsTable jobs={jobsData} loading={isLoading} />:
+                        <NoData />
+                }
+            </Box>
         </Box>
     )
 }
