@@ -16,27 +16,40 @@ const CalandarRangePick: React.FC = () => {
         setStartDate(date);
         setEndDate(null); // Reset end date
         if (date) setOpenEndDatePicker(true); // Open end date picker if start date is selected
+        // storeStartDate(date);
     };
 
     const handleEndDateChange = (date: Date | null) => {
         date ? setEndDate(date) : setEndDate(today);
-        storeDates(startDate, endDate);
+        storeStartDate(startDate);
+        storeEndDate(date);
     };
 
-    const storeDates = (start: Date | null, end: Date | null) => {
-        if (start === null || end === null) {
+    const storeStartDate = (date: Date | null) => {
+        if(date === null) {
             return;
         }
-        const startTime = startOfDay(start)?.getTime();
-        const endTime = endOfDay(end)?.getTime();
+        const startTime = startOfDay(date)?.getTime();
         appTaskDispatch({
             type: "startDateDataChanged",
             startDate: startTime
         });
+    }
+
+    const storeEndDate = (date: Date | null) => {
+        if(date === null) {
+            return;
+        }
+        const endTime = endOfDay(date)?.getTime();
         appTaskDispatch({
             type: "endDateDataChanged",
             endDate: endTime
         })
+    }
+
+    const storeDates = (start: Date | null, end: Date | null) => {
+        storeStartDate(start);
+        storeEndDate(end);
     }
 
     const handleCloseEndDatePicker = () => {
