@@ -112,7 +112,16 @@ const Pipelines : React.FC = () => {
                         setIsLoading(false);
                     }
                     setFullJobsData(data);
-                    setJobsData(data[env].jobs);
+                    if(data.hasOwnProperty(env)) {
+                        setJobsData(data[env].jobs);
+                    } else {
+                        const newEnv = Object.keys(data)[0]
+                        setJobsData(data[newEnv].jobs);
+                        taskDispatch({
+                            type: "buildIdChanged",
+                            buildID: newEnv
+                        })
+                    }
                     setIsLoading(false);
                     setNoData(false);
                     calculateSideBarItems(data[env].jobs);
