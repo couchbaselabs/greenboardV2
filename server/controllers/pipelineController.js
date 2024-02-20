@@ -4,14 +4,19 @@ const getPipelineJobs = async (req, res) => {
     const scope = req.params.scope;
     const startDate = parseInt(req.query.startDate, 10);
     const endDate = parseInt(req.query.endDate, 10);
-    let queryString = "SELECT *, meta().id FROM `pipeline` WHERE runDate > $1 and runDate < $2 ORDER by runDate";
-    const queryParams = [startDate, endDate]
+    const queryString = "SELECT p.environment, p.cpVersion, p.cbVersion, p.commitUrl, " +
+        "p.result as pipelineResult, p.runDate as pipelineRunDate, " +
+        "p.duration as pipelineDuration, p.description , j.*, meta(j).id as jobId " +
+        "FROM `pipeline` p " +
+        "JOIN `jobs` j ON j.pipelineID = META(p).id " +
+        "WHERE p.runDate BETWEEN $1 AND $2 " +
+        "AND j.runDate BETWEEN $3 AND $4";
+    const queryParams = [startDate, endDate, startDate, endDate];
     let response = {};
     try {
         const result = await dbClient.queryDB(scope, queryString, queryParams);
         for (const row of result.rows) {
-            const data = row['pipeline'];
-            const environment = data['environment'];
+            const environment = row['environment'];
             if(!response.hasOwnProperty(environment)) {
                 response[environment] = {
                     "duration": 0,
@@ -20,48 +25,45 @@ const getPipelineJobs = async (req, res) => {
                 };
             }
             let environmentData = response[environment];
-            let jobToStore = {
-                'id': row['id'],
-                'jobName': data['name'],
-                'url': data['url'],
-                'cpVersion': data['cpVersion'],
-                'cbVersion': data['cbVersion'],
-                'commitUrl': data['commitUrl'],
-                'result': data['result'],
-                'duration': data['duration'],
-                'description': data['description'],
-                'runDate' : data['runDate'],
-                'jobs': {}
-            };
-            let jobsCount = 0;
-            const jobsQueryString = "SELECT *, meta().id FROM `jobs` WHERE pipelineID = $1 and runDate > $2 and runDate < $3 ORDER by runDate";
-            const jobQueryParams = [row['id'], startDate, endDate]
-            const jobResult = await dbClient.queryDB(scope, jobsQueryString, jobQueryParams);
-            jobResult.rows.forEach(jobRow => {
-                const jobData = jobRow['jobs'];
-                const jobName =jobData['name'];
-                let job = {
-                    'id': jobRow['id'],
-                    'result' : jobData['result'],
-                    'totalCount' : jobData['totalCount'],
-                    'failCount' : jobData['failCount'],
-                    'passCount' : jobData['passCount'],
-                    'runDate' : jobData['runDate'],
-                    'duration': jobData['duration'],
-                    'url' : jobData['url'],
-                    'provider': jobData['provider'],
-                    'component': jobData['component']
+            let jobsIndex = environmentData['jobs'].findIndex((value) => {return value['id'] === row['pipelineID']});
+            let jobToStore;
+            if(jobsIndex < 0) {
+                jobToStore = {
+                    'id': row['pipelineID'],
+                    'jobName': row['pipelineJob'],
+                    'url': row['pipelineJobUrl'],
+                    'cpVersion': row['cpVersion'],
+                    'cbVersion': row['cbVersion'],
+                    'commitUrl': row['commitUrl'],
+                    'result': row['pipelineResult'],
+                    'duration': row['pipelineDuration'],
+                    'description': row['description'],
+                    'runDate': row['pipelineRunDate'],
+                    'jobs': {}
                 };
-                if(!jobToStore['jobs'].hasOwnProperty(jobName)) {
-                    jobToStore['jobs'][jobName] = [];
-                }
-                jobToStore['jobs'][jobName].push(job);
-                jobsCount++;
-
-            });
-            environmentData['jobCount'] += jobsCount;
-            environmentData['jobs'].push(jobToStore);
-            environmentData['duration'] += data['duration'];
+                environmentData['jobs'].push(jobToStore);
+                environmentData['duration'] += row['pipelineDuration'];
+            } else {
+                jobToStore = environmentData['jobs'][jobsIndex];
+            }
+            const jobName =row['name'];
+            let job = {
+                'id': row['jobId'],
+                'result' : row['result'],
+                'totalCount' : row['totalCount'],
+                'failCount' : row['failCount'],
+                'passCount' : row['passCount'],
+                'runDate' : row['runDate'],
+                'duration': row['duration'],
+                'url' : row['url'],
+                'provider': row['provider'],
+                'component': row['component']
+            };
+            if(!jobToStore['jobs'].hasOwnProperty(jobName)) {
+                jobToStore['jobs'][jobName] = [];
+            }
+            jobToStore['jobs'][jobName].push(job);
+            environmentData['jobCount']++;
         }
         return res.json(response);
     } catch (error) {
@@ -70,5 +72,5 @@ const getPipelineJobs = async (req, res) => {
 }
 
 module.exports = {
-    getPipelineJobs
+    getPipelineJobs,
 }

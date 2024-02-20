@@ -114,9 +114,11 @@ const Pipelines : React.FC = () => {
                     setFullJobsData(data);
                     if(data.hasOwnProperty(env)) {
                         setJobsData(data[env].jobs);
+                        calculateSideBarItems(data[env].jobs);
                     } else {
                         const newEnv = Object.keys(data)[0]
                         setJobsData(data[newEnv].jobs);
+                        calculateSideBarItems(data[newEnv].jobs);
                         taskDispatch({
                             type: "buildIdChanged",
                             buildID: newEnv
@@ -124,7 +126,6 @@ const Pipelines : React.FC = () => {
                     }
                     setIsLoading(false);
                     setNoData(false);
-                    calculateSideBarItems(data[env].jobs);
                 })
                 .catch(console.error);
         }
