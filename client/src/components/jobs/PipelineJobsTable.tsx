@@ -8,11 +8,15 @@ import {KeyboardArrowDown} from "@mui/icons-material";
 import {formatDuration} from "../../Utils/DateUtils.ts";
 import {useAppContext, useAppTaskDispatch} from "../../context/context.tsx";
 import {NoData} from "../misc/NoData.tsx";
+import {TestCaseDetailsModal} from "./TestCaseDetailsModal.tsx";
 
 
 const PipelineJobsTable : React.FC = () => {
-    const [openDialog, setOpenDialog] = useState(false);
+    const [openJobDialog, setOpenJobDialog] = useState(false);
+    const [openTestCaseDialog, setOpenTestCaseDialog] = useState(false);
     const [selectedJob, setSelectedJob] = useState<PipelineJobsModal | null>(null);
+    const [selectedJobTestCase, setSelectedJobTestCase] = useState<TestCaseDetailModal>({docId: "", testName:""});
+    const [selectedTestStatus, setSelectedTestStatus] = useState("");
     const [paginationModel, setPaginationModel] = useState({
         pageSize: 25,
         page: 0,
@@ -146,19 +150,35 @@ const PipelineJobsTable : React.FC = () => {
     }, [env])
 
     // @ts-ignore
-    const handleOpenDialog = (row) => {
+    const handleJobOpenDialog = (row) => {
         const job: PipelineJobsModal = {
             jobName: row.jobName,
             jobs: row.jobs
         }
         setSelectedJob(job);
-        setOpenDialog(true);
+        setOpenJobDialog(true);
     };
 
-    const handleCloseDialog = () => {
-        setOpenDialog(false);
+    // @ts-ignore
+    const handleOpenTestCaseDialog = (row) => {
+        const job: TestCaseDetailModal = {
+            docId: row.id,
+            testName: row.jobName
+        }
+        setSelectedJobTestCase(job);
+        setOpenTestCaseDialog(true);
+    }
+
+    const handleCloseJobDialog = () => {
+        setOpenJobDialog(false);
         setSelectedJob(null);
     };
+
+    const handleCloseTestDialog = () => {
+        setOpenTestCaseDialog(false);
+        setSelectedJobTestCase({docId: "", testName: ""});
+        setSelectedTestStatus("");
+    }
 
     let rows = [];
     if(jobs){
@@ -207,7 +227,7 @@ const PipelineJobsTable : React.FC = () => {
                 const hasExtraInfo = params.row.jobs && params.row.jobs.length > 1;
                 return hasExtraInfo ? (
                     <Stack direction="row">
-                        <Link href="#" onClick={() => handleOpenDialog(params.row)}><KeyboardArrowDown /></Link>
+                        <Link href="#" onClick={() => handleJobOpenDialog(params.row)}><KeyboardArrowDown /></Link>
                     </Stack>
                 ) : (
                     <></>
@@ -223,8 +243,40 @@ const PipelineJobsTable : React.FC = () => {
             },
         },
         { field: 'result', headerName: 'Result', width: 100 },
-        { field: 'failCount', headerName: 'Fail Count', type: 'number', width: 80 },
-        { field: 'passCount', headerName: 'Pass Count', type: 'number', width: 80 },
+        { field: 'failCount', headerName: 'Fail Count', width: 80,
+            renderCell: (params) => {
+                const failCount = params.value;
+                return (
+                    failCount === 0?
+                        (
+                            <div>{failCount}</div>
+                        ):
+                        (
+                            <Link href="#" onClick={() => {
+                                handleOpenTestCaseDialog(params.row);
+                                setSelectedTestStatus("FAILED");
+                            }}>{failCount}</Link>
+            )
+                )
+            }
+        },
+        { field: 'passCount', headerName: 'Pass Count', width: 80,
+            renderCell: (params) => {
+                const passCount = params.value;
+                return (
+                    passCount === 0?
+                        (
+                            <div>{passCount}</div>
+                        ):
+                        (
+                            <Link href="#" onClick={() => {
+                                handleOpenTestCaseDialog(params.row);
+                                setSelectedTestStatus("PASSED");
+                            }}>{passCount}</Link>
+                        )
+                )
+            }
+        },
         { field: 'totalCount', headerName: 'Total Count', type: 'number', width: 80 },
         { field: 'duration', headerName: 'Duration', width: 100, valueGetter: (params: GridValueGetterParams) => formatDuration(params.value)},
         { field: 'runDate', headerName: 'Run Date', width: 180, valueGetter: (params) => new Date(params.row.runDate).toLocaleString() },
@@ -264,7 +316,12 @@ const PipelineJobsTable : React.FC = () => {
                                 toolbar: GridToolbar,
                             }}
             />
-            <PipelineJobDetailsModal open={openDialog} onClose={handleCloseDialog} job={selectedJob} />
+            <PipelineJobDetailsModal open={openJobDialog} onClose={handleCloseJobDialog} job={selectedJob} />
+            <TestCaseDetailsModal testName={selectedJobTestCase?.testName}
+                                  result={selectedTestStatus}
+                                  docId={selectedJobTestCase?.docId}
+                                  isModalOpen={openTestCaseDialog}
+                                  onClose={handleCloseTestDialog} />
         </>
     )
 };

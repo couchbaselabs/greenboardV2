@@ -16,15 +16,36 @@ import {
     Typography
 } from "@mui/material";
 import {PaperComponent, rowStyle} from "../../Utils/StylesUtils";
-import React from "react";
+import React, {useState} from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import {formatDuration} from "../../Utils/DateUtils";
+import {TestCaseDetailsModal} from "./TestCaseDetailsModal.tsx";
 
 
 const PipelineJobDetailsModal: React.FC<PipelineJobDetailsModalProps> = ({open, onClose, job}) => {
     if (job === null) {
         return null;
     }
+    const [selectedJobTestCase, setSelectedJobTestCase] = useState<TestCaseDetailModal>({docId: "", testName:""});
+    const [openTestCaseDialog, setOpenTestCaseDialog] = useState(false);
+    const [selectedTestStatus, setSelectedTestStatus] = useState("");
+
+    // @ts-ignore
+    const handleOpenTestCaseDialog = (row) => {
+        const test: TestCaseDetailModal = {
+            docId: row.id,
+            testName: job.jobName
+        }
+        setSelectedJobTestCase(test);
+        setOpenTestCaseDialog(true);
+    }
+
+    const handleCloseTestDialog = () => {
+        setOpenTestCaseDialog(false);
+        setSelectedJobTestCase({docId: "", testName: ""});
+        setSelectedTestStatus("");
+    }
+
     return (
         <Dialog open={open}
                 onClose={onClose}
@@ -82,8 +103,30 @@ const PipelineJobDetailsModal: React.FC<PipelineJobDetailsModalProps> = ({open, 
                                         <TableCell><Link href={row.url} target="_blank">link</Link></TableCell>
                                         <TableCell sx={rowStyle(row.result)}>{row.result}</TableCell>
                                         <TableCell>{row.totalCount}</TableCell>
-                                        <TableCell>{row.failCount}</TableCell>
-                                        <TableCell>{row.passCount}</TableCell>
+                                        <TableCell>
+                                            {
+                                                row.failCount === 0 ?
+                                                    (<div>{row.failCount}</div>):
+                                                    (<Link href="#" onClick={() => {
+                                                        handleOpenTestCaseDialog(row);
+                                                        setSelectedTestStatus("FAILED");
+                                                    }}>
+                                                        {row.failCount}
+                                                    </Link>)
+                                            }
+                                        </TableCell>
+                                        <TableCell>
+                                            {
+                                                row.passCount === 0 ?
+                                                    (<div>{row.passCount}</div>):
+                                                    (<Link href="#" onClick={() => {
+                                                        handleOpenTestCaseDialog(row);
+                                                        setSelectedTestStatus("PASSED");
+                                                    }}>
+                                                        {row.passCount}
+                                                    </Link>)
+                                            }
+                                        </TableCell>
                                         <TableCell>{new Date(row.runDate).toLocaleString()}</TableCell>
                                         <TableCell>{formatDuration(row.duration)}</TableCell>
                                         <TableCell>{row.provider}</TableCell>
@@ -92,6 +135,11 @@ const PipelineJobDetailsModal: React.FC<PipelineJobDetailsModalProps> = ({open, 
                             </TableBody>
                         </Table>
                     </TableContainer>
+                    <TestCaseDetailsModal testName={selectedJobTestCase?.testName}
+                                          result={selectedTestStatus}
+                                          docId={selectedJobTestCase?.docId}
+                                          isModalOpen={openTestCaseDialog}
+                                          onClose={handleCloseTestDialog} />
                 </Box>
             </DialogContent>
         </Dialog>

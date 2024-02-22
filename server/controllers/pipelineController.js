@@ -161,8 +161,30 @@ const getPipelineAggregates = async (req, res) => {
     }
 }
 
+const getJobTestCases = async (req, res) => {
+    const scope = "capella";
+    const collection = "jobs"
+    const result = req.params.result;
+    const docId = req.params.doc_id;
+    try {
+        const doc = await dbClient.getFromDB(scope, collection, docId);
+        let testCases = [];
+        if(result === "PASSED") {
+            testCases = doc.content.passedTests;
+        } else {
+            testCases = doc.content.failedTests;
+        }
+        res.json(testCases);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+
+
+}
+
 module.exports = {
     getPipelineJobs,
     getPipelineAggregates,
-    getPipelines
+    getPipelines,
+    getJobTestCases
 }

@@ -6,5 +6,6 @@ const pipelineRouter = express.Router();
 pipelineRouter.get("/pipeline_jobs/:scope", pipelineController.getPipelineJobs);
 pipelineRouter.get('/pipeline_aggregates/:scope', pipelineController.getPipelineAggregates);
 pipelineRouter.get('/pipelines/:scope', pipelineController.getPipelines);
+pipelineRouter.get('/test_cases/:result/:doc_id', pipelineController.getJobTestCases);
 
 module.exports = pipelineRouter;

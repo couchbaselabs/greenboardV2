@@ -51,7 +51,7 @@ interface PipelineJobsModal {
 
 interface PipelineJobDetailsModalProps {
     open: boolean;
-    onClose: any;
+    onClose: () => void;
     job: PipelineJobsModal | null;
 }
 
@@ -83,4 +83,27 @@ interface Pipeline {
 
 interface Pipelines {
     [key: string]: Pipeline[];
+}
+
+interface TestCaseDetails {
+    className: string;
+    duration: number;
+    errorDetails: string | null;
+    errorStackTrace: string | null;
+    name: string;
+    status: string;
+    suite: string;
+}
+
+interface TestCaseDetailsModalProps {
+    testName: string;
+    result: string;
+    docId: string;
+    isModalOpen: boolean;
+    onClose: () => void;
+}
+
+interface TestCaseDetailModal {
+    testName: string;
+    docId: string;
 }
