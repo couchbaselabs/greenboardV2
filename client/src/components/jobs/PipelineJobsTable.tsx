@@ -218,7 +218,7 @@ const PipelineJobsTable : React.FC = () => {
             field: 'jobName', headerName: 'Job Name', width: 350,
             renderCell: (params) => {
                 return(
-                    <Link href={params.row.url} target="_blank">{params.value}</Link>
+                    <Link href={`${params.row.url}testReport`} target="_blank">{params.value}</Link>
                 );
             },
         },
