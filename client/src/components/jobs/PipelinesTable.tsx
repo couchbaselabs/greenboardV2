@@ -1,20 +1,70 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Box, Link} from '@mui/material';
 import {GridColDef, GridToolbar, GridValueGetterParams} from '@mui/x-data-grid';
 import {StyledDataGrid} from "./StyledDataGrip";
 import {getRowClassName} from "../../Utils/StylesUtils";
 import {formatDuration} from "../../Utils/DateUtils.ts";
-import {useAppContext} from "../../context/context.tsx";
+import {useAppContext, useAppTaskDispatch} from "../../context/context.tsx";
+import {NoData} from "../misc/NoData.tsx";
 
 
-const PipelinesTable: React.FC<PipelineProps> = ({jobs, loading}) => {
+const PipelinesTable: React.FC = () => {
 
     const [paginationModel, setPaginationModel] = useState({
-        pageSize: 25,
+        pageSize: 5,
         page: 0,
     });
+    const [data, setData] = useState<Pipelines | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [dataRows, setDataRows] = useState<Pipeline[]>([]);
+    const [noData, setNoData] = useState(false);
     const appContext = useAppContext();
     const variantFilters = appContext.variantFilters;
+    const env = appContext.environment;
+    const taskDispatch = useAppTaskDispatch()
+
+    useEffect(() => {
+        if(appContext.scope !== "capella"){
+            return;
+        }
+        setIsLoading(true);
+        const startDate = appContext.startDate;
+        const endDate = appContext.endDate;
+        const api = `${import.meta.env.VITE_APP_SERVER}/pipelines/capella?startDate=${startDate}&endDate=${endDate}`
+        fetch(api)
+            .then((res) => res.json())
+            .then((data) => {
+                if(Object.keys(data).length === 0) {
+                    setNoData(true);
+                    setIsLoading(false);
+                    return;
+                }
+                setData(data)
+                if(data.hasOwnProperty(env)) {
+                    setDataRows(data[env]);
+                } else {
+                    const newEnv = Object.keys(data)[0]
+                    setDataRows(data[newEnv]);
+                    taskDispatch({
+                        type: "buildIdChanged",
+                        buildID: newEnv
+                    })
+                }
+                setIsLoading(false);
+            })
+            .catch((error) => {
+                console.log(error);
+                setData(null);
+                setIsLoading(false);
+            })
+    }, [appContext.scope, appContext.startDate, appContext.endDate])
+
+    useEffect(() => {
+        if(data) {
+            setDataRows(data[env]);
+        }
+    }, [env])
+
     const columns: GridColDef[] = [
         {
             field: 'jobName',
@@ -42,19 +92,7 @@ const PipelinesTable: React.FC<PipelineProps> = ({jobs, loading}) => {
         {field: 'description', headerName: 'Description', width: 200},
     ];
 
-    let rows = jobs.map((job) => ({
-        id: job.id,
-        jobName: job.jobName,
-        cbVersion: job.cbVersion,
-        cpVersion: job.cpVersion,
-        commitUrl: job.commitUrl,
-        result: job.result,
-        duration: job.duration,
-        runDate: job.runDate,
-        description: job.description,
-        url: job.url,
-    }));
-
+    let rows = dataRows;
     // Filter out rows based on filters
     for (const variantKey in variantFilters) {
         if(variantKey === "CP Version"){
@@ -62,6 +100,12 @@ const PipelinesTable: React.FC<PipelineProps> = ({jobs, loading}) => {
         } else if(variantKey === "CB Version") {
             rows = rows.filter((value) => variantFilters[variantKey].includes(value.cbVersion));
         }
+    }
+
+    if(noData) {
+        return (
+            <NoData />
+        );
     }
 
     return (
@@ -79,7 +123,7 @@ const PipelinesTable: React.FC<PipelineProps> = ({jobs, loading}) => {
                             slots={{
                                 toolbar: GridToolbar,
                             }}
-                            loading={loading}
+                            loading={isLoading}
                             sx={{
                                 maxHeight: '20%'
                             }}

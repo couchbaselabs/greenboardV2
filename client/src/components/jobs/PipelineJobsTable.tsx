@@ -1,25 +1,149 @@
 import {Link, Stack} from "@mui/material";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {GridColDef, GridToolbar, GridValueGetterParams} from "@mui/x-data-grid";
 import {StyledDataGrid} from "./StyledDataGrip.tsx";
 import {getRowClassName} from "../../Utils/StylesUtils.tsx";
 import PipelineJobDetailsModal from "./PipelineJobDetailsModal.tsx";
 import {KeyboardArrowDown} from "@mui/icons-material";
 import {formatDuration} from "../../Utils/DateUtils.ts";
-import {useAppContext} from "../../context/context.tsx";
+import {useAppContext, useAppTaskDispatch} from "../../context/context.tsx";
+import {NoData} from "../misc/NoData.tsx";
 
 
-const PipelineJobsTable : React.FC<PipelineProps> = ({jobs, loading}) => {
+const PipelineJobsTable : React.FC = () => {
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedJob, setSelectedJob] = useState<PipelineJobsModal | null>(null);
     const [paginationModel, setPaginationModel] = useState({
         pageSize: 25,
         page: 0,
     });
+    const [fullJobsData, setFullJobsData] = useState<PipelineData | null>(null);
+    const [jobs, setJobs] = useState<PipelineJob[] | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [noData, setNoData] = useState(false);
     const appContext = useAppContext();
     const platformFilters = appContext.platformFilters;
     const featureFilters = appContext.featureFilters;
     const variantFilters = appContext.variantFilters;
+    const env = appContext.environment;
+    const taskDispatch = useAppTaskDispatch()
+
+    const calculateSideBarItems = (data: PipelineJob[]) => {
+        let sideBarData: SideBarData = {
+            platforms: {},
+            features: {},
+            variants: {},
+        }
+        for (const pipelineJob of data) {
+            const cpVersion = pipelineJob.cpVersion;
+            const cbVersion = pipelineJob.cbVersion;
+            if(!sideBarData.variants['CP Version']){
+                sideBarData.variants['CP Version'] = {
+                }
+            }
+            if(!sideBarData.variants['CP Version'][cpVersion]){
+                sideBarData.variants['CP Version'][cpVersion] = {
+                    totalCount: 0,
+                    failCount: 0,
+                    pending: 0
+                }
+            }
+            if(!sideBarData.variants['CB Version']){
+                sideBarData.variants['CB Version'] = {
+                }
+            }
+            if(!sideBarData.variants['CB Version'][cbVersion]){
+                sideBarData.variants['CB Version'][cbVersion] = {
+                    totalCount: 0,
+                    failCount: 0,
+                    pending: 0
+                }
+            }
+            for (const jobsKey in pipelineJob.jobs) {
+                const jobs = pipelineJob.jobs[jobsKey];
+                const job = jobs.reduce((prev,
+                                         current) =>
+                    (prev.passCount > current.passCount)?prev: current, jobs[0]);
+                const component = job.component.toUpperCase();
+                const platform = job.provider.toUpperCase();
+                if(!sideBarData.platforms[platform]){
+                    sideBarData.platforms[platform] = {
+                        totalCount: 0,
+                        failCount: 0,
+                        pending: 0
+                    }
+                }
+                sideBarData.platforms[platform].totalCount += job.totalCount;
+                sideBarData.platforms[platform].failCount += job.failCount;
+                if(!sideBarData.features[component]){
+                    sideBarData.features[component] = {
+                        totalCount: 0,
+                        failCount: 0,
+                        pending: 0
+                    }
+                }
+                sideBarData.features[component].totalCount += job.totalCount;
+                sideBarData.features[component].failCount += job.failCount;
+                sideBarData.variants['CP Version'][cpVersion].totalCount += job.totalCount;
+                sideBarData.variants['CP Version'][cpVersion].failCount += job.failCount;
+                sideBarData.variants['CB Version'][cbVersion].totalCount += job.totalCount;
+                sideBarData.variants['CB Version'][cbVersion].failCount += job.failCount;
+            }
+        }
+        taskDispatch({
+            type: "sideBarDataChanged",
+            sideBarData: sideBarData
+        });
+        taskDispatch({
+            type: "buildIdChanged",
+            buildID: env
+        })
+    }
+
+    useEffect(() => {
+        if(appContext.scope !== "capella") {
+            return
+        }
+        setIsLoading(true);
+        setNoData(false);
+        const startDate = appContext.startDate;
+        const endDate = appContext.endDate;
+        const api = `${import.meta.env.VITE_APP_SERVER}/pipeline_jobs/capella?startDate=${startDate}&endDate=${endDate}`
+        console.log("fetching Data");
+        fetch(api)
+            .then((res) => res.json())
+            .then((data) => {
+                if(Object.entries(data).length == 0) {
+                    setNoData(true);
+                    setIsLoading(false);
+                    return;
+                }
+                setFullJobsData(data);
+                if(data.hasOwnProperty(env)) {
+                    setJobs(data[env].jobs);
+                    calculateSideBarItems(data[env].jobs);
+                } else {
+                    const newEnv = Object.keys(data)[0]
+                    setJobs(data[newEnv].jobs);
+                    calculateSideBarItems(data[newEnv].jobs);
+                    taskDispatch({
+                        type: "buildIdChanged",
+                        buildID: newEnv
+                    })
+                }
+                setIsLoading(false);
+                setNoData(false);
+            })
+            .catch(console.error);
+    }, [appContext.scope, appContext.startDate, appContext.endDate]);
+
+    useEffect(() => {
+        if(fullJobsData){
+            setNoData(false);
+            setJobs(fullJobsData[env].jobs);
+            calculateSideBarItems(fullJobsData[env].jobs);
+        }
+    }, [env])
 
     // @ts-ignore
     const handleOpenDialog = (row) => {
@@ -37,27 +161,29 @@ const PipelineJobsTable : React.FC<PipelineProps> = ({jobs, loading}) => {
     };
 
     let rows = [];
-    for (const job of jobs) {
-        const parentName = job.jobName;
-        const parentUrl = job.url;
-        const cbVersion = job.cbVersion;
-        const cpVersion = job.cpVersion;
-        const pipelineJobs = job.jobs;
-        for (const pipelineJobName in pipelineJobs){
-            const pipelineJobsData = pipelineJobs[pipelineJobName];
-            const bestRunDetails = pipelineJobsData.reduce((prev,
-                                                            current) =>
-                (prev.passCount > current.passCount)?prev: current, pipelineJobsData[0]);
-            const row = {
-                ...bestRunDetails,
-                parentName: parentName,
-                parentUrl: parentUrl,
-                cbVersion: cbVersion,
-                cpVersion: cpVersion,
-                jobs: pipelineJobsData,
-                jobName: pipelineJobName,
-            };
-            rows.push(row);
+    if(jobs){
+        for (const job of jobs) {
+            const parentName = job.jobName;
+            const parentUrl = job.url;
+            const cbVersion = job.cbVersion;
+            const cpVersion = job.cpVersion;
+            const pipelineJobs = job.jobs;
+            for (const pipelineJobName in pipelineJobs){
+                const pipelineJobsData = pipelineJobs[pipelineJobName];
+                const bestRunDetails = pipelineJobsData.reduce((prev,
+                                                                current) =>
+                    (prev.passCount > current.passCount)?prev: current, pipelineJobsData[0]);
+                const row = {
+                    ...bestRunDetails,
+                    parentName: parentName,
+                    parentUrl: parentUrl,
+                    cbVersion: cbVersion,
+                    cpVersion: cpVersion,
+                    jobs: pipelineJobsData,
+                    jobName: pipelineJobName,
+                };
+                rows.push(row);
+            }
         }
     }
 
@@ -74,15 +200,24 @@ const PipelineJobsTable : React.FC<PipelineProps> = ({jobs, loading}) => {
 
     const columns: GridColDef[] = [
         {
-            field: 'jobName', headerName: 'Job Name', width: 350,
+            field: 'more',
+            width: 10,
+            headerName: "",
             renderCell: (params) => {
                 const hasExtraInfo = params.row.jobs && params.row.jobs.length > 1;
                 return hasExtraInfo ? (
                     <Stack direction="row">
-                        <Link href={params.row.url} target="_blank">{params.value}</Link>
                         <Link href="#" onClick={() => handleOpenDialog(params.row)}><KeyboardArrowDown /></Link>
                     </Stack>
                 ) : (
+                    <></>
+                );
+            }
+        },
+        {
+            field: 'jobName', headerName: 'Job Name', width: 350,
+            renderCell: (params) => {
+                return(
                     <Link href={params.row.url} target="_blank">{params.value}</Link>
                 );
             },
@@ -101,6 +236,12 @@ const PipelineJobsTable : React.FC<PipelineProps> = ({jobs, loading}) => {
         { field: 'component', headerName: 'Component', width: 100}
     ];
 
+    if(noData) {
+        return (
+            <NoData />
+        );
+    }
+
     return (
         <>
             <StyledDataGrid columns={columns} rows={rows}
@@ -118,7 +259,7 @@ const PipelineJobsTable : React.FC<PipelineProps> = ({jobs, loading}) => {
                             paginationModel={paginationModel}
                             onPaginationModelChange={setPaginationModel}
                             pageSizeOptions={[5, 10, 25, 50, 100]}
-                            loading={loading}
+                            loading={isLoading}
                             slots={{
                                 toolbar: GridToolbar,
                             }}

@@ -55,3 +55,32 @@ interface PipelineJobDetailsModalProps {
     job: PipelineJobsModal | null;
 }
 
+interface PipelineChartSector {
+    name: string;
+    value: number;
+}
+
+interface PipelineChartEnvironmentData {
+    [key: string]: PipelineChartSector[];
+}
+interface PipelineChartsData {
+    pipeline : PipelineChartEnvironmentData;
+    jobs: PipelineChartEnvironmentData;
+}
+
+interface Pipeline {
+    id: string;
+    jobName: string;
+    cbVersion: string;
+    cpVersion: string;
+    commitUrl: string;
+    result: string;
+    duration: number;
+    runDate: number;
+    description: string;
+    url: string;
+}
+
+interface Pipelines {
+    [key: string]: Pipeline[];
+}
