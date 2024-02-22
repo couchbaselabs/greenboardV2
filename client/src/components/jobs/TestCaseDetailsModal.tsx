@@ -38,20 +38,20 @@ const Row: React.FC<RowProps> = ({ row }) => {
                         <div>{row.name.length < 20? row.name : `${row.name.substring(0, 17)}...`}</div>
                     </Tooltip>
                 </TableCell>
-                <TableCell align="right">
+                <TableCell align="center">
                     <Tooltip title={row.className}>
                         <div>{row.className?.substring(0, 20)}</div>
                     </Tooltip>
                 </TableCell>
-                <TableCell align="right">
+                <TableCell align="center">
                     <Tooltip title={row.suite}>
                         <div>{row.suite.substring(0,20)}</div>
                     </Tooltip>
                 </TableCell>
-                <TableCell align="right">{row.status}</TableCell>
-                <TableCell align="right">{formatDurationSeconds(row.duration)}</TableCell>
-                <TableCell align="right">{row.errorDetails?.substring(0, 20)}</TableCell>
-                <TableCell align="right">{row.errorStackTrace?.substring(0, 20)}</TableCell>
+                <TableCell align="center">{row.status}</TableCell>
+                <TableCell align="center">{formatDurationSeconds(row.duration)}</TableCell>
+                <TableCell align="center">{row.errorDetails?.substring(0, 20)}</TableCell>
+                <TableCell align="center">{row.errorStackTrace?.substring(0, 20)}</TableCell>
             </TableRow>
             <TableRow>
                 <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={8}>
@@ -144,12 +144,12 @@ const TestCaseDetailsModal: React.FC<TestCaseDetailsModalProps> = ({testName, re
                                         <TableRow>
                                             <TableCell />
                                             <TableCell>Name</TableCell>
-                                            <TableCell align="right">Class Name</TableCell>
-                                            <TableCell align="right">Suite</TableCell>
-                                            <TableCell align="right">Status</TableCell>
-                                            <TableCell align="right">Duration</TableCell>
-                                            <TableCell align="right">Error Details</TableCell>
-                                            <TableCell align="right">Error Stack Trace</TableCell>
+                                            <TableCell align="center">Class Name</TableCell>
+                                            <TableCell align="center">Suite</TableCell>
+                                            <TableCell align="center">Status</TableCell>
+                                            <TableCell align="center">Duration</TableCell>
+                                            <TableCell align="center">Error Details</TableCell>
+                                            <TableCell align="center">Error Stack Trace</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
