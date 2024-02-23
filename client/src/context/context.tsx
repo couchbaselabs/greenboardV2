@@ -13,6 +13,7 @@ const AppContext = createContext<context>({
         scope: "capella",
         sideBarData: {},
         variantFilters: {},
+        pipelineFilters: [],
         version: "",
         versions: [],
         environment: "sbx",
@@ -31,6 +32,7 @@ type context = {
         platformFilters: string[];
         featureFilters: string[];
         variantFilters: any;
+        pipelineFilters: string[];
         jobsData: any[];
         pendingData: any[];
         sideBarData: object;
@@ -47,6 +49,7 @@ const initialStates = {
         platformFilters: [],
         featuresFilters: [],
         variantsFilters: object,
+        pipelineFilters: [],
         buildFilter: 5,
         runFilter: 2000,
         jobsData : [],
@@ -60,7 +63,7 @@ const initialStates = {
 function appTaskReducer(task: any, action: { type: string; scope: any; versions: any; version: any; buildID: any;
         runFilter: number; buildFilter: number; platformFilters: string[], featuresFilters:string[],
         variantsFilters:any, jobsData: any[], pendingData: any[], sideBarData: any, environment: string,
-        startDate: number, endDate: number}){
+        startDate: number, endDate: number, pipelineFilters: string[]}){
         switch (action.type) {
                 case 'scopeChange' : {
                         return {
@@ -150,6 +153,12 @@ function appTaskReducer(task: any, action: { type: string; scope: any; versions:
                         return {
                                 ...task,
                                 endDate: action.endDate
+                        };
+                }
+                case 'pipelineFiltersChanged': {
+                        return {
+                                ...task,
+                                pipelineFilters: action.pipelineFilters
                         };
                 }
                 default: {

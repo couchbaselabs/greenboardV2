@@ -1,5 +1,5 @@
 import {Link, Stack} from "@mui/material";
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {GridColDef, GridToolbar, GridValueGetterParams} from "@mui/x-data-grid";
 import {StyledDataGrid} from "./StyledDataGrip.tsx";
 import {getRowClassName} from "../../Utils/StylesUtils.tsx";
@@ -29,6 +29,7 @@ const PipelineJobsTable : React.FC = () => {
     const platformFilters = appContext.platformFilters;
     const featureFilters = appContext.featureFilters;
     const variantFilters = appContext.variantFilters;
+    const pipelineFilters = appContext.pipelineFilters;
     const env = appContext.environment;
     const taskDispatch = useAppTaskDispatch()
 
@@ -188,6 +189,7 @@ const PipelineJobsTable : React.FC = () => {
             const cbVersion = job.cbVersion;
             const cpVersion = job.cpVersion;
             const pipelineJobs = job.jobs;
+            const pipelineId = job.id;
             for (const pipelineJobName in pipelineJobs){
                 const pipelineJobsData = pipelineJobs[pipelineJobName];
                 const bestRunDetails = pipelineJobsData.reduce((prev,
@@ -201,6 +203,7 @@ const PipelineJobsTable : React.FC = () => {
                     cpVersion: cpVersion,
                     jobs: pipelineJobsData,
                     jobName: pipelineJobName,
+                    pipelineId: pipelineId,
                 };
                 rows.push(row);
             }
@@ -217,12 +220,16 @@ const PipelineJobsTable : React.FC = () => {
             rows = rows.filter((value) => variantFilters[variantKey].includes(value.cbVersion));
         }
     }
+    if(pipelineFilters.length > 0) {
+        rows = rows.filter((value) => pipelineFilters.includes(value.pipelineId));
+    }
 
     const columns: GridColDef[] = [
         {
             field: 'more',
             width: 10,
             headerName: "",
+            filterable: false,
             renderCell: (params) => {
                 const hasExtraInfo = params.row.jobs && params.row.jobs.length > 1;
                 return hasExtraInfo ? (
@@ -238,7 +245,12 @@ const PipelineJobsTable : React.FC = () => {
             field: 'jobName', headerName: 'Job Name', width: 350,
             renderCell: (params) => {
                 return(
-                    <Link href={`${params.row.url}testReport`} target="_blank">{params.value}</Link>
+                    <Link href={`${params.row.url}testReport`} target="_blank">
+                        <div>{params.value.length > 40?
+                            `${params.value.substring(0,37)}...`:
+                            params.value
+                        }</div>
+                    </Link>
                 );
             },
         },

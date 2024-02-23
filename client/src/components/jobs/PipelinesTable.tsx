@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Box, Link} from '@mui/material';
+import {Box, Checkbox, Link, Tooltip} from '@mui/material';
 import {GridColDef, GridToolbar, GridValueGetterParams} from '@mui/x-data-grid';
 import {StyledDataGrid} from "./StyledDataGrip";
 import {getRowClassName} from "../../Utils/StylesUtils";
@@ -21,6 +21,7 @@ const PipelinesTable: React.FC = () => {
     const appContext = useAppContext();
     const variantFilters = appContext.variantFilters;
     const env = appContext.environment;
+    const pipelineFilters = appContext.pipelineFilters;
     const taskDispatch = useAppTaskDispatch()
 
     useEffect(() => {
@@ -65,12 +66,50 @@ const PipelinesTable: React.FC = () => {
         }
     }, [env])
 
+    const handleFilterCheckClick = (filter: string) => {
+        let newPipelineFilters: string[];
+        if(pipelineFilters.includes(filter)){
+            newPipelineFilters = pipelineFilters.filter((value) => {return value !== filter});
+        } else {
+            newPipelineFilters = pipelineFilters;
+            newPipelineFilters.push(filter)
+        }
+        taskDispatch({
+            type: "pipelineFiltersChanged",
+            pipelineFilters: newPipelineFilters,
+        });
+    }
+
     const columns: GridColDef[] = [
+        {
+            field: 'filter',
+            headerName: "",
+            width: 10,
+            filterable: false,
+            disableColumnMenu: true,
+            hideable: false,
+            renderCell: (params) => (
+                <Tooltip title="Check to filter jobs for this pipeline">
+                    <Checkbox checked={pipelineFilters.includes(params.row.id)}
+                               onChange={() => handleFilterCheckClick(params.row.id)}
+                    />
+                </Tooltip>
+            )
+        },
         {
             field: 'jobName',
             headerName: 'Job Name',
             width: 250,
-            renderCell: (params) => (<Link href={params.row.url} target="_blank">{params.value}</Link>)
+            renderCell: (params) => (
+                <Tooltip title={params.value}>
+                    <Link href={params.row.url} target="_blank">
+                        <div>{params.value.length > 30?
+                            `${params.value.substring(0,27)}...`:
+                            params.value
+                        }</div>
+                    </Link>
+                </Tooltip>
+            )
         },
         {field: 'cbVersion', headerName: 'CB Version', width: 110},
         {field: 'cpVersion', headerName: 'CP Version', width:110},
@@ -89,7 +128,15 @@ const PipelinesTable: React.FC = () => {
             width: 160,
             valueGetter: (params: GridValueGetterParams) => new Date(params.row.runDate).toLocaleString()
         },
-        {field: 'description', headerName: 'Description', width: 200},
+        {field: 'description', headerName: 'Description', width: 200,
+            renderCell:  (params) => (
+                <Tooltip title={params.value}>
+                    <div>{params.value.length > 20?
+                        `${params.value.substring(0,17)}...`:
+                        params.value
+                    }</div>
+                </Tooltip>
+            )},
     ];
 
     let rows = dataRows;
