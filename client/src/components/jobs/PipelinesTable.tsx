@@ -131,9 +131,11 @@ const PipelinesTable: React.FC = () => {
         {field: 'description', headerName: 'Description', width: 200,
             renderCell:  (params) => (
                 <Tooltip title={params.value}>
-                    <div>{params.value.length > 20?
+                    <div>{params.value?
+                        params.value.length > 20?
                         `${params.value.substring(0,17)}...`:
-                        params.value
+                        params.value :
+                        ""
                     }</div>
                 </Tooltip>
             )},
