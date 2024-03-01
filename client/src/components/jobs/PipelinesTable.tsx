@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from 'react';
-import {Box, Checkbox, Link, Tooltip} from '@mui/material';
+import React, {useDeferredValue, useEffect, useState} from 'react';
+import {Box, Checkbox, Link, TextField, Tooltip} from '@mui/material';
 import {GridColDef, GridToolbar, GridValueGetterParams} from '@mui/x-data-grid';
 import {StyledDataGrid} from "./StyledDataGrip";
 import {getRowClassName} from "../../Utils/StylesUtils";
@@ -8,7 +8,7 @@ import {useAppContext, useAppTaskDispatch} from "../../context/context.tsx";
 import {NoData} from "../misc/NoData.tsx";
 
 
-const PipelinesTable: React.FC = () => {
+const PipelinesTable: React.FC<{search: string}> = ({search}) => {
 
     const [paginationModel, setPaginationModel] = useState({
         pageSize: 5,
@@ -22,6 +22,7 @@ const PipelinesTable: React.FC = () => {
     const variantFilters = appContext.variantFilters;
     const env = appContext.environment;
     const pipelineFilters = appContext.pipelineFilters;
+    const pipelineSearchFilters = appContext.pipelineSearchFilters;
     const taskDispatch = useAppTaskDispatch()
 
     useEffect(() => {
@@ -43,13 +44,21 @@ const PipelinesTable: React.FC = () => {
                 setData(data)
                 if(data.hasOwnProperty(env)) {
                     setDataRows(data[env]);
+                    taskDispatch({
+                        type: 'pipelinesDataChanged',
+                        pipelinesData: data[env],
+                    });
                 } else {
                     const newEnv = Object.keys(data)[0]
                     setDataRows(data[newEnv]);
                     taskDispatch({
                         type: "buildIdChanged",
                         buildID: newEnv
-                    })
+                    });
+                    taskDispatch({
+                        type: 'pipelinesDataChanged',
+                        pipelinesData: data[newEnv],
+                    });
                 }
                 setIsLoading(false);
             })
@@ -63,6 +72,10 @@ const PipelinesTable: React.FC = () => {
     useEffect(() => {
         if(data) {
             setDataRows(data[env]);
+            taskDispatch({
+                type: 'pipelinesDataChanged',
+                pipelinesData: data[env],
+            });
         }
     }, [env])
 
@@ -149,6 +162,9 @@ const PipelinesTable: React.FC = () => {
         } else if(variantKey === "CB Version") {
             rows = rows.filter((value) => variantFilters[variantKey].includes(value.cbVersion));
         }
+    }
+    if(pipelineSearchFilters.length > 0 || search !== "") {
+        rows = rows.filter((value) => pipelineSearchFilters.includes(value.id));
     }
 
     if(noData) {

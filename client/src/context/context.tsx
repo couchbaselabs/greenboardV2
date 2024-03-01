@@ -14,6 +14,9 @@ const AppContext = createContext<context>({
         sideBarData: {},
         variantFilters: {},
         pipelineFilters: [],
+        pipelineSearchFilters: [],
+        pipelinesData: [],
+        pipelineJobsData: [],
         version: "",
         versions: [],
         environment: "sbx",
@@ -33,8 +36,11 @@ type context = {
         featureFilters: string[];
         variantFilters: any;
         pipelineFilters: string[];
+        pipelineSearchFilters: string[];
         jobsData: any[];
         pendingData: any[];
+        pipelinesData: any[];
+        pipelineJobsData: any[];
         sideBarData: object;
         environment: string;
         startDate: number;
@@ -50,10 +56,13 @@ const initialStates = {
         featuresFilters: [],
         variantsFilters: object,
         pipelineFilters: [],
+        pipelineSearchFilters: [],
         buildFilter: 5,
         runFilter: 2000,
         jobsData : [],
         pendingData: [],
+        pipelinesData: [],
+        pipelineJobsData: [],
         sideBarData: {},
         environment: "sbx",
         startDate: startOfDay(new Date()).getTime(),
@@ -63,7 +72,9 @@ const initialStates = {
 function appTaskReducer(task: any, action: { type: string; scope: any; versions: any; version: any; buildID: any;
         runFilter: number; buildFilter: number; platformFilters: string[], featuresFilters:string[],
         variantsFilters:any, jobsData: any[], pendingData: any[], sideBarData: any, environment: string,
-        startDate: number, endDate: number, pipelineFilters: string[]}){
+        startDate: number, endDate: number, pipelineFilters: string[], pipelineSearchFilters: string[],
+        pipelinesData: any[], pipelineJobsData: any[]
+}){
         switch (action.type) {
                 case 'scopeChange' : {
                         return {
@@ -159,6 +170,24 @@ function appTaskReducer(task: any, action: { type: string; scope: any; versions:
                         return {
                                 ...task,
                                 pipelineFilters: action.pipelineFilters
+                        };
+                }
+                case 'pipelineSearchFiltersChanged': {
+                        return {
+                                ...task,
+                                pipelineSearchFilters: action.pipelineSearchFilters
+                        };
+                }
+                case 'pipelinesDataChanged': {
+                        return {
+                                ...task,
+                                pipelinesData: action.pipelinesData
+                        };
+                }
+                case 'pipelineJobsDataChanged': {
+                        return {
+                                ...task,
+                                pipelineJobsData: action.pipelineJobsData
                         };
                 }
                 default: {

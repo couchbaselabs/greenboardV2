@@ -11,7 +11,7 @@ import {NoData} from "../misc/NoData.tsx";
 import {TestCaseDetailsModal} from "./TestCaseDetailsModal.tsx";
 
 
-const PipelineJobsTable : React.FC = () => {
+const PipelineJobsTable : React.FC<{search: string}> = ({search}) => {
     const [openJobDialog, setOpenJobDialog] = useState(false);
     const [openTestCaseDialog, setOpenTestCaseDialog] = useState(false);
     const [selectedJob, setSelectedJob] = useState<PipelineJobsModal | null>(null);
@@ -23,6 +23,7 @@ const PipelineJobsTable : React.FC = () => {
     });
     const [fullJobsData, setFullJobsData] = useState<PipelineData | null>(null);
     const [jobs, setJobs] = useState<PipelineJob[] | null>(null);
+    const [dataRows, setDataRows] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [noData, setNoData] = useState(false);
     const appContext = useAppContext();
@@ -30,8 +31,9 @@ const PipelineJobsTable : React.FC = () => {
     const featureFilters = appContext.featureFilters;
     const variantFilters = appContext.variantFilters;
     const pipelineFilters = appContext.pipelineFilters;
+    const pipelineSearchFilters = appContext.pipelineSearchFilters;
     const env = appContext.environment;
-    const taskDispatch = useAppTaskDispatch()
+    const taskDispatch = useAppTaskDispatch();
 
     const calculateSideBarItems = (data: PipelineJob[]) => {
         let sideBarData: SideBarData = {
@@ -127,6 +129,12 @@ const PipelineJobsTable : React.FC = () => {
                 if(data.hasOwnProperty(env)) {
                     setJobs(data[env].jobs);
                     calculateSideBarItems(data[env].jobs);
+                    let rows = calculateRows(data[env].jobs);
+                    setDataRows(rows);
+                    taskDispatch({
+                        type: "pipelineJobsDataChanged",
+                        pipelineJobsData: rows,
+                    });
                 } else {
                     const newEnv = Object.keys(data)[0]
                     setJobs(data[newEnv].jobs);
@@ -134,7 +142,13 @@ const PipelineJobsTable : React.FC = () => {
                     taskDispatch({
                         type: "buildIdChanged",
                         buildID: newEnv
-                    })
+                    });
+                    let rows = calculateRows(data[newEnv].jobs);
+                    setDataRows(rows);
+                    taskDispatch({
+                        type: "pipelineJobsDataChanged",
+                        pipelineJobsData: rows,
+                    });
                 }
                 setIsLoading(false);
                 setNoData(false);
@@ -147,6 +161,12 @@ const PipelineJobsTable : React.FC = () => {
             setNoData(false);
             setJobs(fullJobsData[env].jobs);
             calculateSideBarItems(fullJobsData[env].jobs);
+            let rows = calculateRows(fullJobsData[env].jobs);
+            setDataRows(rows);
+            taskDispatch({
+                type: "pipelineJobsDataChanged",
+                pipelineJobsData: rows,
+            });
         }
     }, [env])
 
@@ -181,35 +201,38 @@ const PipelineJobsTable : React.FC = () => {
         setSelectedTestStatus("");
     }
 
-    let rows = [];
-    if(jobs){
-        for (const job of jobs) {
-            const parentName = job.jobName;
-            const parentUrl = job.url;
-            const cbVersion = job.cbVersion;
-            const cpVersion = job.cpVersion;
-            const pipelineJobs = job.jobs;
-            const pipelineId = job.id;
-            for (const pipelineJobName in pipelineJobs){
-                const pipelineJobsData = pipelineJobs[pipelineJobName];
-                const bestRunDetails = pipelineJobsData.reduce((prev,
-                                                                current) =>
-                    (prev.passCount > current.passCount)?prev: current, pipelineJobsData[0]);
-                const row = {
-                    ...bestRunDetails,
-                    parentName: parentName,
-                    parentUrl: parentUrl,
-                    cbVersion: cbVersion,
-                    cpVersion: cpVersion,
-                    jobs: pipelineJobsData,
-                    jobName: pipelineJobName,
-                    pipelineId: pipelineId,
-                };
-                rows.push(row);
+    const calculateRows = (jobs: PipelineJob[] | null) => {
+        let rows = [];
+        if(jobs){
+            for (const job of jobs) {
+                const parentName = job.jobName;
+                const parentUrl = job.url;
+                const cbVersion = job.cbVersion;
+                const cpVersion = job.cpVersion;
+                const pipelineJobs = job.jobs;
+                const pipelineId = job.id;
+                for (const pipelineJobName in pipelineJobs){
+                    const pipelineJobsData = pipelineJobs[pipelineJobName];
+                    const bestRunDetails = pipelineJobsData.reduce((prev,
+                                                                    current) =>
+                        (prev.passCount > current.passCount)?prev: current, pipelineJobsData[0]);
+                    const row = {
+                        ...bestRunDetails,
+                        parentName: parentName,
+                        parentUrl: parentUrl,
+                        cbVersion: cbVersion,
+                        cpVersion: cpVersion,
+                        jobs: pipelineJobsData,
+                        jobName: pipelineJobName,
+                        pipelineId: pipelineId,
+                    };
+                    rows.push(row);
+                }
             }
         }
+        return rows;
     }
-
+    let rows = dataRows;
     // Filter out rows based on filters
     rows = rows.filter((value) => platformFilters.includes(value.provider.toUpperCase()));
     rows = rows.filter((value) => featureFilters.includes(value.component.toUpperCase()));
@@ -222,6 +245,9 @@ const PipelineJobsTable : React.FC = () => {
     }
     if(pipelineFilters.length > 0) {
         rows = rows.filter((value) => pipelineFilters.includes(value.pipelineId));
+    }
+    if(pipelineSearchFilters.length > 0 || search !== ""){
+        rows = rows.filter((value) => pipelineSearchFilters.includes(value.pipelineId) && value.jobName.includes(search));
     }
 
     const columns: GridColDef[] = [
