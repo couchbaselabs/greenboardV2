@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useDeferredValue, useEffect, useState} from "react";
 import {
     Box,
     Collapse,
@@ -10,7 +10,7 @@ import {
     TableCell, TableContainer, TableHead,
     TableRow,
     Typography,
-    Paper, CircularProgress, Tooltip
+    Paper, CircularProgress, Tooltip, TextField
 } from "@mui/material";
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
@@ -79,6 +79,8 @@ const Row: React.FC<RowProps> = ({ row }) => {
 const TestCaseDetailsModal: React.FC<TestCaseDetailsModalProps> = ({testName, result, docId, isModalOpen, onClose}) => {
     const [isloading, setIsLoading] = useState(false);
     const [data, setData] = useState<TestCaseDetails[]>([]);
+    const [search, setSearch] = useState("");
+    const deferredSearch = useDeferredValue(search);
 
 
     useEffect(() => {
@@ -86,6 +88,7 @@ const TestCaseDetailsModal: React.FC<TestCaseDetailsModalProps> = ({testName, re
             return;
         }
         setIsLoading(true);
+        setSearch("");
         const api = `${import.meta.env.VITE_APP_SERVER}/test_cases/${result}/${docId}`;
         fetch(api)
             .then((response) => response.json())
@@ -97,6 +100,11 @@ const TestCaseDetailsModal: React.FC<TestCaseDetailsModalProps> = ({testName, re
                 console.log(error);
             });
     }, [result, docId]);
+
+    let rows = data;
+    rows = rows.filter((value) => value.name.includes(deferredSearch) ||
+        value.className.includes(deferredSearch) || value.suite.includes(deferredSearch) ||
+        value.errorDetails?.includes(deferredSearch) || value.errorStackTrace?.includes(deferredSearch));
 
 
     return (
@@ -138,27 +146,34 @@ const TestCaseDetailsModal: React.FC<TestCaseDetailsModalProps> = ({testName, re
                     {
                         isloading?
                             <CircularProgress />:
-                            <TableContainer component={Paper}>
-                                <Table aria-label="collapsible table">
-                                    <TableHead>
-                                        <TableRow>
-                                            <TableCell />
-                                            <TableCell>Name</TableCell>
-                                            <TableCell align="center">Class Name</TableCell>
-                                            <TableCell align="center">Suite</TableCell>
-                                            <TableCell align="center">Status</TableCell>
-                                            <TableCell align="center">Duration</TableCell>
-                                            <TableCell align="center">Error Details</TableCell>
-                                            <TableCell align="center">Error Stack Trace</TableCell>
-                                        </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        {data.map((row) => (
-                                            <Row key={row.name} row={row} />
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </TableContainer>
+                            <Box>
+                                <TextField label='Search by Name, Class Name, Suite, Error Details or Error Stack Trace'
+                                           value={search}
+                                           sx={{width: '100%'}}
+                                           onChange={(e) => setSearch(e.target.value)}
+                                />
+                                <TableContainer component={Paper}>
+                                    <Table aria-label="collapsible table">
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell />
+                                                <TableCell>Name</TableCell>
+                                                <TableCell align="center">Class Name</TableCell>
+                                                <TableCell align="center">Suite</TableCell>
+                                                <TableCell align="center">Status</TableCell>
+                                                <TableCell align="center">Duration</TableCell>
+                                                <TableCell align="center">Error Details</TableCell>
+                                                <TableCell align="center">Error Stack Trace</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {rows.map((row, index) => (
+                                                <Row key={`${row.name}_${index}`} row={row} />
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                            </Box>
                     }
                     </Box>
                 </DialogContent>
