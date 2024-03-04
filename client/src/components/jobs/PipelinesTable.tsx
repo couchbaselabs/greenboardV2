@@ -41,6 +41,7 @@ const PipelinesTable: React.FC<{search: string}> = ({search}) => {
                     setIsLoading(false);
                     return;
                 }
+                setNoData(false);
                 setData(data)
                 if(data.hasOwnProperty(env)) {
                     setDataRows(data[env]);
