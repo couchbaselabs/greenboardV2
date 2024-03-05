@@ -178,13 +178,96 @@ const getJobTestCases = async (req, res) => {
     } catch (error) {
         res.status(500).send(error.message);
     }
+}
 
+const getPipelineSummary = async (scope, queryString, queryParams) => {
+    const result = await dbClient.queryDB(scope, queryString, queryParams);
+    let jobs = [];
+    for (const row of result.rows) {
+        let jobsIndex = jobs.findIndex((value) => {return value['id'] === row['pipelineID']});
+        let jobToStore;
+        if(jobsIndex < 0) {
+            jobToStore = {
+                'id': row['pipelineID'],
+                'jobs': {}
+            };
+            jobs.push(jobToStore);
+        } else {
+            jobToStore = jobs[jobsIndex];
+        }
+        const jobName = row['name'];
+        let job = {
+            'totalCount' : row['totalCount'],
+            'failCount' : row['failCount'],
+            'passCount': row['passCount'],
+            'duration': row['duration'],
+        };
+        if(!jobToStore['jobs'].hasOwnProperty(jobName)) {
+            jobToStore['jobs'][jobName] = [];
+        }
+        jobToStore['jobs'][jobName].push(job);
+    }
+    let totalCount = 0;
+    let passCount = 0;
+    let failCount = 0;
+    let duration = 0;
+    for (const pipelineJob of jobs){
+        for (const job in pipelineJob['jobs']) {
+            const bestJob = pipelineJob['jobs'][job].reduce((prev,
+                                        current) =>
+                (prev.passCount > current.passCount)?prev: current, pipelineJob['jobs'][job][0]);
+            totalCount += bestJob.totalCount;
+            passCount += bestJob.passCount;
+            failCount += bestJob.failCount;
+            duration += bestJob.duration;
+        }
+    }
+    return {
+        "totalCount": totalCount,
+        "failCount": failCount,
+        "passCount": passCount,
+        "duration": duration,
+    };
+}
 
+const getPipelineSummaryForCp = async (req,res) => {
+    const scope = "capella";
+    const CPVersion = req.query.cpVersion;
+    const environment = req.query.environment;
+    const queryString = "SELECT  j.totalCount,j.passCount, j.failCount, j.duration, j.name, j.pipelineID " +
+        "FROM `pipeline` p JOIN `jobs` j ON j.pipelineID = META(p).id WHERE p.cpVersion = $1 and p.environment = $2 " +
+        "ORDER BY j.pipelineID, j.name"
+    const queryParams = [CPVersion, environment];
+    try {
+        const response = await getPipelineSummary(scope, queryString, queryParams);
+        res.json(response);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
+const getPipelineSummaryForAMI = async (req,res) => {
+    const scope = "capella";
+    const amiVersion = req.query.amiVersion;
+    const environment = req.query.environment;
+    const queryString = "SELECT  j.totalCount,j.passCount, j.failCount, j.duration, j.name, j.pipelineID " +
+        "FROM `pipeline` p JOIN `jobs` j ON j.pipelineID = META(p).id " +
+        "WHERE p.cbVersion like '%' || $1 || '%' and p.environment = $2 " +
+        "ORDER BY j.pipelineID, j.name"
+    const queryParams = [amiVersion, environment];
+    try {
+        const response = await getPipelineSummary(scope, queryString, queryParams);
+        res.json(response);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
 }
 
 module.exports = {
     getPipelineJobs,
     getPipelineAggregates,
     getPipelines,
-    getJobTestCases
+    getJobTestCases,
+    getPipelineSummaryForCp,
+    getPipelineSummaryForAMI
 }
