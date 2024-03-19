@@ -93,7 +93,8 @@ const getPipelineJobs = async (req, res) => {
                 'duration': row['duration'],
                 'url' : row['url'],
                 'provider': row['provider'],
-                'component': row['component']
+                'component': row['component'],
+                'analysis': row['analysis']?row['analysis']:"",
             };
             if(!jobToStore['jobs'].hasOwnProperty(jobName)) {
                 jobToStore['jobs'][jobName] = [];
@@ -263,11 +264,28 @@ const getPipelineSummaryForAMI = async (req,res) => {
     }
 }
 
+const storeJobRCA = async (req, res) => {
+    const scope = "capella";
+    const collection = "jobs";
+    const docId = req.params.doc_id;
+    const analysis = req.body.analysis;
+    try {
+        const doc = await dbClient.getFromDB(scope, collection, docId);
+        let toStore = doc.content;
+        toStore['analysis'] = analysis;
+        const result = await dbClient.upsertToDB(scope, collection, docId, toStore);
+        res.json(result);
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+}
+
 module.exports = {
     getPipelineJobs,
     getPipelineAggregates,
     getPipelines,
     getJobTestCases,
     getPipelineSummaryForCp,
-    getPipelineSummaryForAMI
+    getPipelineSummaryForAMI,
+    storeJobRCA
 }

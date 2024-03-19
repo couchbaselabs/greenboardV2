@@ -9,5 +9,6 @@ pipelineRouter.get('/pipelines/:scope', pipelineController.getPipelines);
 pipelineRouter.get('/test_cases/:result/:doc_id', pipelineController.getJobTestCases);
 pipelineRouter.get('/pipeline_summary_cp', pipelineController.getPipelineSummaryForCp);
 pipelineRouter.get('/pipeline_summary_ami', pipelineController.getPipelineSummaryForAMI);
+pipelineRouter.post('/job_analysis/:doc_id', pipelineController.storeJobRCA);
 
 module.exports = pipelineRouter;

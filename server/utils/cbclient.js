@@ -23,7 +23,18 @@ const getFromDB = async (scope, collection, id) => {
     }
 }
 
+const upsertToDB = async (scope, collection, id, doc) => {
+    try {
+        const coll = await db.selectCollection(scope, collection);
+        const result = await coll.upsert(id, doc);
+        return result;
+    } catch (e) {
+        throw e;
+    }
+}
+
 module.exports = {
     queryDB,
-    getFromDB
+    getFromDB,
+    upsertToDB
 };

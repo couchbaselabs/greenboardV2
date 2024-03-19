@@ -1,14 +1,15 @@
-import {Link, Stack} from "@mui/material";
+import { Link, Stack, Tooltip} from "@mui/material";
 import React, {useEffect, useState} from "react";
 import {GridColDef, GridToolbar, GridValueGetterParams} from "@mui/x-data-grid";
 import {StyledDataGrid} from "./StyledDataGrip.tsx";
 import {getRowClassName} from "../../Utils/StylesUtils.tsx";
 import PipelineJobDetailsModal from "./PipelineJobDetailsModal.tsx";
-import {KeyboardArrowDown} from "@mui/icons-material";
+import KeyboardArrowDown from "@mui/icons-material/KeyboardArrowDown";
 import {formatDuration} from "../../Utils/DateUtils.ts";
 import {useAppContext, useAppTaskDispatch} from "../../context/context.tsx";
 import {NoData} from "../misc/NoData.tsx";
 import {TestCaseDetailsModal} from "./TestCaseDetailsModal.tsx";
+import AnalysisColumnCell from "./AnalysisColumnCell";
 
 
 const PipelineJobsTable : React.FC<{search: string}> = ({search}) => {
@@ -22,7 +23,7 @@ const PipelineJobsTable : React.FC<{search: string}> = ({search}) => {
         page: 0,
     });
     const [fullJobsData, setFullJobsData] = useState<PipelineData | null>(null);
-    const [jobs, setJobs] = useState<PipelineJob[] | null>(null);
+    const [_, setJobs] = useState<PipelineJob[] | null>(null);
     const [dataRows, setDataRows] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [noData, setNoData] = useState(false);
@@ -201,6 +202,30 @@ const PipelineJobsTable : React.FC<{search: string}> = ({search}) => {
         setSelectedTestStatus("");
     }
 
+    const handleAnalysisSubmit = async (analysisText: string, rowId: string) => {
+        try {
+            const api = `${import.meta.env.VITE_APP_SERVER}/job_analysis/${rowId}`
+            const response = await fetch(api, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ analysis: analysisText }),
+            });
+
+            if (!response.ok) {
+                console.log(`Error in trying to push data. ${response.statusText}`)
+            }
+
+            const data = await response.json();
+            console.log('Analysis Submitted:', data);
+            // Handle the response further here, e.g., display a success message
+        } catch (error) {
+            console.error('Error submitting analysis:', error);
+            // Handle the error here, e.g., display an error message
+        }
+    };
+
     const calculateRows = (jobs: PipelineJob[] | null) => {
         let rows = [];
         if(jobs){
@@ -260,7 +285,9 @@ const PipelineJobsTable : React.FC<{search: string}> = ({search}) => {
                 const hasExtraInfo = params.row.jobs && params.row.jobs.length > 1;
                 return hasExtraInfo ? (
                     <Stack direction="row">
-                        <Link href="#" onClick={() => handleJobOpenDialog(params.row)}><KeyboardArrowDown /></Link>
+                        <Tooltip title="Show other job runs">
+                            <Link href="#" onClick={() => handleJobOpenDialog(params.row)}><KeyboardArrowDown /></Link>
+                        </Tooltip>
                     </Stack>
                 ) : (
                     <></>
@@ -268,15 +295,17 @@ const PipelineJobsTable : React.FC<{search: string}> = ({search}) => {
             }
         },
         {
-            field: 'jobName', headerName: 'Job Name', width: 350,
+            field: 'jobName', headerName: 'Job Name', width: 250,
             renderCell: (params) => {
                 return(
-                    <Link href={`${params.row.url}testReport`} target="_blank">
-                        <div>{params.value.length > 40?
-                            `${params.value.substring(0,37)}...`:
-                            params.value
-                        }</div>
-                    </Link>
+                    <Tooltip title={params.value}>
+                        <Link href={`${params.row.url}testReport`} target="_blank">
+                            <div>{params.value.length > 25?
+                                `${params.value.substring(0,22)}...`:
+                                params.value
+                            }</div>
+                        </Link>
+                    </Tooltip>
                 );
             },
         },
@@ -322,7 +351,51 @@ const PipelineJobsTable : React.FC<{search: string}> = ({search}) => {
         { field: 'cpVersion', headerName: 'CP version', width: 110 },
         { field: 'cbVersion', headerName: 'CB version', width: 120 },
         { field: 'parentName', headerName: 'Pipeline Job', width: 200,
-            renderCell: (params) => (<Link href={params.row.parentUrl} target="_blank">{params.value}</Link>) },
+            renderCell: (params) => (<Tooltip title={params.value}><Link href={params.row.parentUrl} target="_blank">{params.value}</Link></Tooltip>) },
+        /*{ field: "analysis", headerName: "Analysis", width: 300, renderCell: (params) => {
+                const [analysisText, setAnalysisText] = useState(params.value?params.value:"");
+                const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+                    setAnalysisText(event.target.value);
+                };
+
+                const handleSubmit = () => {
+                    handleAnalysisSubmit(analysisText, params.id.toString());
+                };
+            return (
+                <TextField
+                    multiline
+                    rows={2}
+                    variant='standard'
+                    size='small'
+                    value={analysisText}
+                    onChange={handleChange}
+                    InputProps={{
+                        endAdornment: (
+                            <InputAdornment position="end">
+                                <IconButton onClick={handleSubmit}>
+                                    <DoneIcon fontSize="small"/>
+                                </IconButton>
+                            </InputAdornment>
+                        )
+                    }}
+                />
+            )
+            }},*/
+        { field: 'analysis', headerName: "Analysis", width: 300,
+            renderCell: (params) => (
+                <AnalysisColumnCell
+                    id={params.id.toString()}
+                    initialAnalysisText={params.value || ""}
+                    onAnalysisSubmit={(id, text) => {
+                        const updatedRows = dataRows.map((row) =>
+                            row.id.toString() === id ? { ...row, analysis: text } : row
+                        );
+                        setDataRows(updatedRows);
+                        handleAnalysisSubmit(text, id);
+                    }}
+                />
+            ),
+        },
         { field: 'component', headerName: 'Component', width: 100}
     ];
 

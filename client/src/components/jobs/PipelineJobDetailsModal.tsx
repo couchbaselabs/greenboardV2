@@ -20,6 +20,7 @@ import React, {useState} from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import {formatDuration} from "../../Utils/DateUtils";
 import {TestCaseDetailsModal} from "./TestCaseDetailsModal.tsx";
+import AnalysisColumnCell from "./AnalysisColumnCell.tsx";
 
 
 const PipelineJobDetailsModal: React.FC<PipelineJobDetailsModalProps> = ({open, onClose, job}) => {
@@ -45,6 +46,30 @@ const PipelineJobDetailsModal: React.FC<PipelineJobDetailsModalProps> = ({open, 
         setSelectedJobTestCase({docId: "", testName: ""});
         setSelectedTestStatus("");
     }
+
+    const handleAnalysisSubmit = async (analysisText: string, rowId: string) => {
+        try {
+            const api = `${import.meta.env.VITE_APP_SERVER}/job_analysis/${rowId}`
+            const response = await fetch(api, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ analysis: analysisText }),
+            });
+
+            if (!response.ok) {
+                console.log(`Error in trying to push data. ${response.statusText}`)
+            }
+
+            const data = await response.json();
+            console.log('Analysis Submitted:', data);
+            // Handle the response further here, e.g., display a success message
+        } catch (error) {
+            console.error('Error submitting analysis:', error);
+            // Handle the error here, e.g., display an error message
+        }
+    };
 
     return (
         <Dialog open={open}
@@ -94,6 +119,7 @@ const PipelineJobDetailsModal: React.FC<PipelineJobDetailsModalProps> = ({open, 
                                     <TableCell align="right">Run Date</TableCell>
                                     <TableCell align="right">Duration</TableCell>
                                     <TableCell align="right">Provider</TableCell>
+                                    <TableCell align="right">Analysis</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -130,6 +156,16 @@ const PipelineJobDetailsModal: React.FC<PipelineJobDetailsModalProps> = ({open, 
                                         <TableCell>{new Date(row.runDate).toLocaleString()}</TableCell>
                                         <TableCell>{formatDuration(row.duration)}</TableCell>
                                         <TableCell>{row.provider}</TableCell>
+                                        <TableCell>
+                                            <AnalysisColumnCell
+                                                id={row.id.toString()}
+                                                initialAnalysisText={row.analysis || ""}
+                                                onAnalysisSubmit={(id, text) => {
+                                                    row.analysis = text;
+                                                    handleAnalysisSubmit(text, id);
+                                                }}
+                                            />
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

@@ -9,6 +9,7 @@ interface PipelineJobData {
     url: string
     provider: string;
     component: string;
+    analysis: string;
 }
 
 interface PipelineJobs {
@@ -106,4 +107,17 @@ interface TestCaseDetailsModalProps {
 interface TestCaseDetailModal {
     testName: string;
     docId: string;
+}
+
+interface AnalysisDialogProps {
+    open: boolean;
+    onClose: () => void;
+    analysisText: string;
+    onSubmit: (text: string) => void;
+}
+
+interface AnalysisColumnCellProps {
+    id: string;
+    initialAnalysisText: string;
+    onAnalysisSubmit: (id: string, text: string) => void;
 }
