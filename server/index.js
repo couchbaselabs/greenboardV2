@@ -5,6 +5,10 @@ const versionRoutes = require("./routes/versionsRoutes");
 const componentsRoutes = require("./routes/componentsRoutes");
 const buildRoutes = require("./routes/buildsRoutes");
 const pipelineRoutes = require("./routes/pipelineRoutes");
+const https = require("https");
+const fs = require("fs");
+var gracefulFs = require('graceful-fs')
+gracefulFs.gracefulify(fs)
 
 dotenv.config();
 
@@ -22,8 +26,12 @@ app.use(pipelineRoutes);
 
 const startServer = async () => {
     try {
-        app.listen(process.env["GREENBOARD_PORT"], () => console.log("Greenboard server started on " +
-            "http://localhost:" + process.env["GREENBOARD_PORT"]));
+        const httpsOptions = {
+            cert: fs.readFileSync(process.env['SSL_CERTIFICATE']),
+            key: fs.readFileSync(process.env['SSL_CERTIFICATE_KEY'])
+        }
+        https.createServer(httpsOptions, app).listen(process.env["GREENBOARD_PORT"], () =>
+            console.log("Greenboard server started on https://localhost:" + process.env["GREENBOARD_PORT"]));
     } catch (error) {
         console.log(error);
     }
