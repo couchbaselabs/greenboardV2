@@ -1,8 +1,6 @@
 import { AppBar, Toolbar, Typography, Box } from "@mui/material";
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
-import {useState} from "react";
 import { ProductMenu } from "./ProductMenu";
-import UserMenu from "./UserMenu";
 import VersionMenu from "./VersionMenu";
 import Styles from "./styles";
 import {FilterMenu} from "./FilterMenu";
@@ -11,14 +9,14 @@ import {useAppContext} from "../../context/context.tsx";
 const AppBarComponent: React.FC = () => {
   //const [selectedProd, setSelectedProd] = useState(Products.indexOf(localStorage.getItem('scope') || ""));
   //const [version, setVersion] = useState<string>(versions[0]);
-  const [isLoggedIn, setLoggedIn] = useState(false);
-  const [userName, setUserName] = useState('');
+ /* const [isLoggedIn, setLoggedIn] = useState(false);
+  const [userName, setUserName] = useState('');*/
   const buildsFilterItems = [5, 10, 25];
   const runsFilterItems = [0, 2000, 5000, 10000];
   const appContext = useAppContext();
   const product = appContext.scope;
 
-  const handleLogin = (response: any) => {
+  /*const handleLogin = (response: any) => {
     setLoggedIn(true);
     setUserName(response.profileObj.name);
     localStorage.setItem("user", response.profileObj.name);
@@ -28,7 +26,7 @@ const AppBarComponent: React.FC = () => {
     setLoggedIn(false);
     setUserName('');
     localStorage.setItem("user", "");
-  };
+  };*/
 
   return (
     <AppBar position="absolute" sx={Styles.toolBar} >
@@ -47,7 +45,7 @@ const AppBarComponent: React.FC = () => {
                         <FilterMenu title="Runs" items={runsFilterItems} scopeVariable='runFilter' scopeAction='runFilterChanged' />
                     </>
                 )}
-                <UserMenu isLoggedIn={isLoggedIn} userName={userName} handleLogin={handleLogin} handleLogout={handleLogout} />
+                {/*<UserMenu isLoggedIn={isLoggedIn} userName={userName} handleLogin={handleLogin} handleLogout={handleLogout} />*/}
             </Box>
         </Toolbar>
     </AppBar>

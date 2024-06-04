@@ -6,7 +6,7 @@ import React from "react";
 
 const DefaultMain: React.FC = () => {
     return (
-        <Box component="main" sx={{ flexGrow: 1}}>
+        <Box component="main" sx={{ width: "80%" }}>
             <Box sx={{
                 height: '20%', /* Chart takes up 30% of the height */
                 width: '100%',

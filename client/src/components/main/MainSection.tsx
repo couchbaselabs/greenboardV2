@@ -2,7 +2,7 @@ import {useAppContext} from "../../context/context.tsx";
 import SiderComponent from "../sidebar/SideBar.tsx";
 import CapellaMain from "./CapellaMain.tsx";
 import DefaultMain from "./DefaultMain.tsx";
-import {Stack} from "@mui/material";
+import {Box, Stack} from "@mui/material";
 import React from "react";
 
 const MainSection: React.FC = () => {
@@ -14,7 +14,9 @@ const MainSection: React.FC = () => {
             <SiderComponent/>
             {
                 product === "capella"? (
-                    <CapellaMain />
+                    <Box sx={{ width: '80%'}}>
+                        <CapellaMain />
+                    </Box>
                 ) : (
                     <DefaultMain />
                 )
