@@ -345,6 +345,12 @@ const PipelineJobsTable : React.FC<{search: string}> = ({search}) => {
             }
         },
         { field: 'totalCount', headerName: 'Total Count', type: 'number', width: 80 },
+        { field: 'passPercentage', headerName: 'Pass %', width: 100, valueGetter: (params: GridValueGetterParams) => {
+                const totalCount = params.row.totalCount;
+                const passCount = params.row.passCount;
+                return totalCount > 0 ? ((passCount / totalCount) * 100).toFixed(2) + '%' : '0%';
+            }
+        },
         { field: 'duration', headerName: 'Duration', width: 100, valueGetter: (params: GridValueGetterParams) => formatDuration(params.value)},
         { field: 'runDate', headerName: 'Run Date', width: 180, valueGetter: (params) => new Date(params.row.runDate).toLocaleString() },
         { field: 'provider', headerName: 'Provider', width: 100, valueGetter: (params) => params.value.toUpperCase() },
