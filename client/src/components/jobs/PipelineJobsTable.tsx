@@ -108,6 +108,124 @@ const PipelineJobsTable : React.FC<{search: string}> = ({search}) => {
         })
     }
 
+    // New function to update sidebar statistics based on filtered rows
+    const updateSideBarItemsFromFilteredRows = (filteredRows: any[]) => {
+        // Get the current sideBarData structure to preserve all items
+        const currentSideBarData = appContext.sideBarData as SideBarData;
+        if (!currentSideBarData || !currentSideBarData.platforms) {
+            return; // Skip if no current data
+        }
+
+        // Create a new sideBarData object with the same structure as the existing one
+        let updatedSideBarData: SideBarData = {
+            platforms: {},
+            features: {},
+            variants: {},
+        };
+
+        // Initialize the structure with the same keys but zeroed counts
+        // This ensures all items remain visible even if they have no jobs in the current filter
+        // Platforms
+        for (const platform in currentSideBarData.platforms) {
+            updatedSideBarData.platforms[platform] = {
+                totalCount: 0,
+                failCount: 0,
+                pending: 0
+            };
+        }
+        
+        // Features
+        for (const feature in currentSideBarData.features) {
+            updatedSideBarData.features[feature] = {
+                totalCount: 0,
+                failCount: 0,
+                pending: 0
+            };
+        }
+        
+        // Variants
+        for (const variantType in currentSideBarData.variants) {
+            updatedSideBarData.variants[variantType] = {};
+            for (const variant in currentSideBarData.variants[variantType]) {
+                updatedSideBarData.variants[variantType][variant] = {
+                    totalCount: 0,
+                    failCount: 0,
+                    pending: 0
+                };
+            }
+        }
+
+        // Update counts based on filtered rows
+        for (const row of filteredRows) {
+            const platform = row.provider.toUpperCase();
+            const component = row.component.toUpperCase();
+            const cpVersion = row.cpVersion;
+            const cbVersion = row.cbVersion;
+            
+            // Update platform stats
+            if (updatedSideBarData.platforms[platform]) {
+                updatedSideBarData.platforms[platform].totalCount += row.totalCount;
+                updatedSideBarData.platforms[platform].failCount += row.failCount;
+            }
+            
+            // Update feature stats
+            if (updatedSideBarData.features[component]) {
+                updatedSideBarData.features[component].totalCount += row.totalCount;
+                updatedSideBarData.features[component].failCount += row.failCount;
+            }
+            
+            // Update CP Version stats
+            if (updatedSideBarData.variants['CP Version'] && 
+                updatedSideBarData.variants['CP Version'][cpVersion]) {
+                updatedSideBarData.variants['CP Version'][cpVersion].totalCount += row.totalCount;
+                updatedSideBarData.variants['CP Version'][cpVersion].failCount += row.failCount;
+            }
+            
+            // Update CB Version stats
+            if (updatedSideBarData.variants['CB Version'] && 
+                updatedSideBarData.variants['CB Version'][cbVersion]) {
+                updatedSideBarData.variants['CB Version'][cbVersion].totalCount += row.totalCount;
+                updatedSideBarData.variants['CB Version'][cbVersion].failCount += row.failCount;
+            }
+        }
+
+        // Update the sidebar data in the context
+        taskDispatch({
+            type: "sideBarDataChanged",
+            sideBarData: updatedSideBarData
+        });
+    };
+
+    // Add useEffect hooks to update sidebar items when filters change
+    useEffect(() => {
+        if (dataRows.length > 0) {
+            // Apply the same filtering logic as in the rendering part
+            let filteredRows = [...dataRows];
+            filteredRows = filteredRows.filter((value) => platformFilters.includes(value.provider.toUpperCase()));
+            filteredRows = filteredRows.filter((value) => featureFilters.includes(value.component.toUpperCase()));
+            
+            for (const variantKey in variantFilters) {
+                if (variantKey === "CP Version") {
+                    filteredRows = filteredRows.filter((value) => variantFilters[variantKey].includes(value.cpVersion));
+                } else if (variantKey === "CB Version") {
+                    filteredRows = filteredRows.filter((value) => variantFilters[variantKey].includes(value.cbVersion));
+                }
+            }
+            
+            if (pipelineFilters.length > 0) {
+                filteredRows = filteredRows.filter((value) => pipelineFilters.includes(value.pipelineId));
+            }
+            
+            if (pipelineSearchFilters.length > 0 || search !== "") {
+                filteredRows = filteredRows.filter((value) => 
+                    pipelineSearchFilters.includes(value.pipelineId) && value.jobName.includes(search));
+            }
+            
+            // Update sidebar items based on filtered rows
+            updateSideBarItemsFromFilteredRows(filteredRows);
+        }
+    }, [platformFilters, featureFilters, variantFilters, pipelineFilters, pipelineSearchFilters, search]);
+
     useEffect(() => {
         if(appContext.scope !== "capella") {
             return

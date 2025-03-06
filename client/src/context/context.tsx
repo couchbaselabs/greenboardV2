@@ -1,6 +1,30 @@
-import {createContext, useContext, useReducer} from "react";
+import {createContext, useContext, useReducer, Dispatch} from "react";
 import {object} from "prop-types";
 import {endOfDay, startOfDay} from 'date-fns';
+
+// Define action type for proper typing
+type AppAction = {
+    type: string;
+    scope?: any;
+    versions?: any;
+    version?: any;
+    buildID?: any;
+    runFilter?: number;
+    buildFilter?: number;
+    platformFilters?: string[];
+    featuresFilters?: string[];
+    variantsFilters?: any;
+    jobsData?: any[];
+    pendingData?: any[];
+    sideBarData?: any;
+    environment?: string;
+    startDate?: number;
+    endDate?: number;
+    pipelineFilters?: string[];
+    pipelineSearchFilters?: string[];
+    pipelinesData?: any[];
+    pipelineJobsData?: any[];
+};
 
 const AppContext = createContext<context>({
         buildFilter: 0,
@@ -23,7 +47,9 @@ const AppContext = createContext<context>({
         startDate: startOfDay(new Date()).getTime(),
         endDate: endOfDay(new Date()).getTime(),
 });
-const AppDispatchContext = createContext({});
+
+// Fix the dispatch context typing
+const AppDispatchContext = createContext<Dispatch<AppAction>>({} as Dispatch<AppAction>);
 
 type context = {
         scope: string;
@@ -69,12 +95,7 @@ const initialStates = {
         endDate: endOfDay(new Date()).getTime(),
     }
 
-function appTaskReducer(task: any, action: { type: string; scope: any; versions: any; version: any; buildID: any;
-        runFilter: number; buildFilter: number; platformFilters: string[], featuresFilters:string[],
-        variantsFilters:any, jobsData: any[], pendingData: any[], sideBarData: any, environment: string,
-        startDate: number, endDate: number, pipelineFilters: string[], pipelineSearchFilters: string[],
-        pipelinesData: any[], pipelineJobsData: any[]
-}){
+function appTaskReducer(task: any, action: AppAction){
         switch (action.type) {
                 case 'scopeChange' : {
                         return {
